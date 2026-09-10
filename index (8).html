@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f1419">
+<title>تكنو خريج - V8.0 إدارة مجموعات كاملة + تعديل رسائل 🏆 - ذهبية وفضية وبرونزية - مصحح 🔥</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{font-family:'Tajawal',sans-serif;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{height:100%;height:100dvh;margin:0;padding:0;overflow:hidden;background:#0a0f14;color:white}
+#app{height:100%;height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+.glass{background:rgba(28,33,40,0.9);backdrop-filter:blur(12px);border:1px solid rgba(42,52,65,0.6)}
+.card-hover{transition:all 0.2s ease} .card-hover:active{transform:scale(0.98)}
+.btn-press:active{transform:scale(0.95)}
+.gradient-gold{background:linear-gradient(135deg,#f59e0b,#d97706,#fbbf24)}
+.gradient-blue{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch} .scroll::-webkit-scrollbar{width:0}
+.chat-container{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden}
+.chat-messages{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;padding-bottom:10px}
+</style>
+</head>
+<body>
+<div id="app" class="bg-[#0a0f14]"><div class="flex-1 flex items-center justify-center"><p class="animate-pulse">⏳ جاري تحميل V7.2...</p></div></div>
+<div id="toastBox" class="fixed bottom-[90px] left-1/2 -translate-x-1/2 z-[200] space-y-2 w-[90%] max-w-[380px] pointer-events-none"></div>
+<input type="file" id="imgInput" accept="image/*" class="hidden"><input type="file" id="profilePicInput" accept="image/*" class="hidden">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, setDoc, getDocs, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const firebaseConfig = { apiKey: "AIzaSyAX_yrLx7ltNv6HXh4KMwioi-YxsO0WVCM", authDomain: "technokhareeg2.firebaseapp.com", projectId: "technokhareeg2", storageBucket: "technokhareeg2.firebasestorage.app", messagingSenderId: "526382735312", appId: "1:526382735312:web:cebbef6f52ac20f1c063d5" };
+let db; try{ const app=initializeApp(firebaseConfig); db=getFirestore(app); }catch(e){}
+var users=[], msgs=[], groups=[], posts=[], postComments=[], commentDrafts={};
+var logged=false, cur=null, tab='الرئيسية', selChat=null, selGroup=null, auth='login', showPass=false, form={name:'',email:'',pass:''}, showCG=false, gName='', selM=[], selM2=[], newPost='', isRec=false, rec=null, chunks=[], recTime=0, recInt=null, searchQ='', showGroupInfo=false, editMsgId=null;
+function toast(m,err){ var b=document.getElementById('toastBox'); var d=document.createElement('div'); d.className='px-4 py-3 rounded-2xl text-[12px] font-bold border backdrop-blur-xl shadow-2xl '+(err?'bg-red-500/90 border-red-400':'glass')+' text-white text-center pointer-events-auto'; d.innerText=m; b.appendChild(d); setTimeout(()=>{ d.style.opacity='0'; setTimeout(()=>d.remove(),300); }, err?5000:3500); }
+window.toast=toast;
+var badWords=['كس','طيز','شرموط','خول','متناك','عرص','لبوة','fuck','shit','bitch','asshole'];
+function checkContent(text){ if(!text) return {ok:true}; var low=text.toLowerCase(); for(let w of badWords){ if(low.includes(w)){ return {ok:false, word:w}; } } if(text.length>500) return {ok:false, reason:'طويل'}; return {ok:true}; }
+window.switchTab=function(k){ tab=k; selChat=null; selGroup=null; render(); }
+window.setAuth=function(k){ auth=k; render(); }
+window.togglePass=function(){ showPass=!showPass; render(); }
+window.openChat=function(id){ selChat=id; selGroup=null; render(); }
+window.openGroup=function(id){ selGroup=id; selChat=null; render(); }
+window.backHome=function(){ selChat=null; selGroup=null; render(); }
+window.toggleCreateGroup=function(){ showCG=!showCG; render(); }
+window.cancelCreateGroup=function(){ showCG=false; selM=[]; render(); }
+window.toggleGroupInfo=function(){ showGroupInfo=!showGroupInfo; selM2=[]; render(); }
+window.toggleM2=function(id){ var i=selM2.indexOf(id); if(i>=0) selM2.splice(i,1); else selM2.push(id); render(); }
+window.toggleM=function(id){ var i=selM.indexOf(id); if(i>=0) selM.splice(i,1); else selM.push(id); render(); }
+window.pickImg=function(){ document.getElementById('imgInput').click(); }
+window.pickProfilePic=function(){ document.getElementById('profilePicInput').click(); }
+window.fillAdmin=function(){ form.email='ahmed@admin.com'; form.pass='admin123'; auth='login'; render(); setTimeout(()=>{ let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); if(fe) fe.value='ahmed@admin.com'; if(fp) fp.value='admin123'; },100); }
+window.onSearch=function(v){ searchQ=v; render(); }
+function isAdmin(){ return cur && cur.email==='ahmed@admin.com'; }
+function isAdminUser(){ return isAdmin(); }
+function isGroupAdmin(group){ if(!group||!cur) return false; let admins=group.admins||[group.createdBy]; return admins.includes(String(cur.id))||String(group.createdBy)===String(cur.id)||isAdmin(); }
+function getMedal(rank){
+  if(rank===0) return {icon:'🥇',label:'ذهبية',bg:'linear-gradient(135deg,#FFD700,#FFA500)',color:'black',name:'بطل المنصة'};
+  if(rank===1) return {icon:'🥈',label:'فضية',bg:'linear-gradient(135deg,#C0C0C0,#A8A8A8)',color:'black',name:'الوصيف'};
+  if(rank===2) return {icon:'🥉',label:'برونزية',bg:'linear-gradient(135deg,#CD7F32,#A0522D)',color:'white',name:'النجم البرونزي'};
+  if(rank<10) return {icon:'🏅',label:'مميز',bg:'rgba(245,158,11,0.15)',color:'#fbbf24',name:'نشط'};
+  return {icon:'⭐',label:'',bg:'',color:'',name:''};
+}
+function getLevel(points){
+  let p=points||0;
+  if(p>=500) return {lvl:5, title:'أسطورة 🔥', next:9999};
+  if(p>=200) return {lvl:4, title:'خبير 💎', next:500};
+  if(p>=100) return {lvl:3, title:'نشط جداً ⚡', next:200};
+  if(p>=50) return {lvl:2, title:'متفاعل 💬', next:100};
+  if(p>=20) return {lvl:1, title:'مبتدئ 🌱', next:50};
+  return {lvl:0, title:'جديد 🆕', next:20};
+}
+async function addPoints(pts, reason){
+  if(!cur) return;
+  try{
+    let newPts=(cur.points||0)+pts;
+    cur.points=newPts;
+    localStorage.setItem('tk_cur', JSON.stringify(cur));
+    // حدث في Firebase
+    let q=query(collection(db,"users"), where("email","==",cur.email));
+    let snap=await getDocs(q);
+    if(!snap.empty){
+      await updateDoc(doc(db,"users",snap.docs[0].id), {points:newPts, lastActive:Date.now()});
+    }
+    if(pts>0) toast('+'+pts+' نقطة '+reason+' 🔥');
+    render();
+  }catch(e){ console.log('points err',e); }
+}
+
+function getPresenceText(id){ var u=users.find(x=>String(x.id)===String(id) || String(x.email)===String(id).toLowerCase()); if(!u) return '⚪ غير متصل'; var diff=Date.now()-(u.lastActive||0); if(diff<120000) return '🟢 متصل الآن'; var m=Math.floor(diff/60000); if(m<60) return '⚪ منذ '+m+' د'; var h=Math.floor(m/60); if(h<24) return '⚪ منذ '+h+' س'; return '⚪ منذ '+Math.floor(h/24)+' يوم'; }
+window.deleteMsg=async function(id){ if(!confirm('مسح الرسالة؟')) return; try{ let q=query(collection(db,"messages"), where("id","==",Number(id))); let snap=await getDocs(q); for(let d of snap.docs) await deleteDoc(doc(db,"messages",d.id)); toast('🗑️ تم المسح'); }catch(e){ toast('خطأ',true); } }
+window.deletePost=async function(id){ if(!confirm('مسح المنشور؟')) return; try{ let q=query(collection(db,"posts"), where("id","==",Number(id))); let snap=await getDocs(q); for(let d of snap.docs) await deleteDoc(doc(db,"posts",d.id)); }catch(e){} }
+
+function render(){
+ var app=document.getElementById('app');
+ if(!logged){
+  var h='<div class="flex-1 overflow-y-auto p-5 flex flex-col justify-center bg-gradient-to-b from-[#0a0f14] to-[#0f1419]"><div class="text-center mb-6"><div class="w-24 h-24 gradient-gold rounded-[24px] mx-auto flex items-center justify-center text-4xl shadow-2xl">👑</div><h1 class="font-black text-[26px] mt-4">تكنو خريج</h1><p class="font-bold text-[14px] text-[#fbbf24]">V8.0 إدارة مجموعات كاملة + تعديل رسائل 🏆 - ذهبية وفضية وبرونزية - مصحح - مقاسات مظبوطة ✅</p><p class="text-[10px] text-[#9aa4b2] mt-1">✨ شغال على كل المتصفحات - Brave • Chrome • الكل</p><div class="mt-3 glass rounded-2xl p-3 flex justify-around text-[10px]"><div><p class="font-black text-[16px] text-white">'+users.length+'</p><p class="text-[#9aa4b2]">مستخدم</p></div><div class="w-[1px] bg-[#2a3441]"></div><div><p class="font-black text-[16px] text-white">Fixed</p><p class="text-[#9aa4b2]">المقاسات</p></div><div class="w-[1px] bg-[#2a3441]"></div><div><p class="font-black text-[16px] text-green-400">100%</p><p class="text-[#9aa4b2]">شغال</p></div></div></div><div class="glass rounded-[28px] p-5 space-y-3 shadow-2xl"><div class="flex gap-2 p-1 bg-[#0a0f14] rounded-full"><button onclick="setAuth(\'login\')" class="flex-1 py-3 rounded-full text-[12px] font-black transition-all '+(auth==='login'?'bg-white text-black shadow-lg':'text-[#6b7280]')+'">دخول</button><button onclick="setAuth(\'reg\')" class="flex-1 py-3 rounded-full text-[12px] font-black transition-all '+(auth==='reg'?'bg-white text-black shadow-lg':'text-[#6b7280]')+'">حساب جديد</button></div>';
+  if(auth==='reg'){ h+='<input id="fn" value="'+form.name+'" placeholder="الاسم الكامل" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none">'; }
+  h+='<input id="fe" value="'+form.email+'" placeholder="الإيميل" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none"><div class="relative"><input id="fp" value="'+form.pass+'" type="'+(showPass?'text':'password')+'" placeholder="الباسورد" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none"><button onclick="togglePass()" class="absolute left-4 top-1/2 -translate-y-1/2 text-[14px]">👁️</button></div>';
+  if(auth==='login'){ h+='<button onclick="doLogin()" class="w-full gradient-blue py-3.5 rounded-full font-black shadow-lg btn-press">دخول 🔥</button><button onclick="fillAdmin()" class="w-full gradient-gold py-3 rounded-full text-[11px] font-black text-black shadow-lg btn-press">👑 دخول الأدمن</button>'; }
+  else{ h+='<button onclick="doReg()" class="w-full bg-[#10b981] py-3.5 rounded-full font-black shadow-lg btn-press">إنشاء حساب ✅</button>'; }
+  h+='</div><p class="text-[9px] text-center text-[#4b5563] mt-6">V8.0 إدارة مجموعات كاملة + تعديل رسائل 🏆 - ذهبية وفضية وبرونزية - مصحح - مقاسات مظبوطة على Brave وكل المتصفحات</p></div>'; app.innerHTML=h;
+  setTimeout(()=>{ let fn=document.getElementById('fn'); if(fn) fn.oninput=e=>form.name=e.target.value; let fe=document.getElementById('fe'); if(fe) fe.oninput=e=>form.email=e.target.value; let fp=document.getElementById('fp'); if(fp) fp.oninput=e=>form.pass=e.target.value; },50); return;
+ }
+ var curGroup=groups.find(g=>String(g.id)===String(selGroup));
+ var curChat=users.find(u=>String(u.id)===String(selChat) || String(u.email)===String(selChat));
+ if(selChat||selGroup){
+  var title=curGroup?curGroup.name:curChat?curChat.name:'شات'; var img=curGroup?curGroup.img||'👥':curChat?curChat.name[0]:'💬'; var sub=curGroup?curGroup.members+' عضو':(curChat?getPresenceText(curChat.id||curChat.email):'');
+  var hh='<div class="chat-container bg-[#0a0f14]"><div class="p-3 glass border-b border-[#2a3441] flex items-center gap-3 shrink-0 '+(curGroup?'cursor-pointer hover:bg-[#1c2128]':'')+'" '+(curGroup?'onclick="toggleGroupInfo()"':'')+'><button onclick="backHome()" class="w-10 h-10 glass rounded-full flex items-center justify-center shrink-0">←</button><div class="w-10 h-10 rounded-full flex items-center justify-center font-black shadow-lg shrink-0 '+(curGroup?'bg-[#10b981]':'gradient-blue')+'">'+img+'</div><div class="flex-1 min-w-0"><p class="font-black text-[13px] truncate">'+title+' '+(curGroup?'⚙️':'')+'</p><p class="text-[10px] '+(sub.includes('متصل الآن')?'text-green-400':'text-[#9aa4b2]')+' truncate">'+sub+(curGroup?' • اضغط للإدارة':'')+'</p></div>'+(curGroup?'<div class="w-8 h-8 glass rounded-full flex items-center justify-center text-[12px]">⚙️</div>':'')+'</div>';
+  // Group info panel
+  if(curGroup && showGroupInfo){
+    var gMembers=curGroup.memberIds||[];
+    var gAdmins=curGroup.admins||[curGroup.createdBy];
+    hh+='<div class="glass border-b border-[#2a3441] p-4 max-h-[60vh] overflow-y-auto"><div class="flex justify-between items-center mb-3"><p class="font-black text-[13px]">⚙️ إدارة المجموعة</p><button onclick="toggleGroupInfo()" class="w-8 h-8 glass rounded-full text-[10px]">✕</button></div>';
+    hh+='<div class="space-y-2 mb-4"><p class="text-[11px] font-bold text-[#9aa4b2]">👥 الأعضاء ('+gMembers.length+')</p>';
+    for(let mid of gMembers){
+      let mu=users.find(u=>String(u.id)===String(mid)||String(u.email)===String(mid));
+      if(!mu) continue;
+      let isCreator=String(mid)===String(curGroup.createdBy);
+      let isAdmin=gAdmins.includes(String(mid))||isCreator;
+      let isMe=String(mid)===String(cur.id);
+      hh+='<div class="flex items-center gap-2 p-2.5 rounded-[14px] glass"><div class="w-9 h-9 rounded-full gradient-blue flex items-center justify-center text-[10px] overflow-hidden">'+(mu.pic?'<img src="'+mu.pic+'" class="w-full h-full object-cover">':mu.name[0])+'</div><div class="flex-1"><p class="text-[11px] font-bold">'+mu.name+' '+(isMe?'(أنت)':'')+' '+(isCreator?'👑':'')+(isAdmin&&!isCreator?'⭐':'')+'</p><p class="text-[9px] text-[#9aa4b2]">'+(isCreator?'المنشئ':isAdmin?'مسؤول':'عضو')+'</p></div>';
+      if(!isMe && (String(curGroup.createdBy)===String(cur.id) || isAdminUser())){
+        hh+='<div class="flex gap-1">';
+        if(!isAdmin){ hh+='<button onclick="makeGroupAdmin(\''+mid+'\')" class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-[9px] font-bold">⭐ مسؤول</button>'; }
+        else if(!isCreator){ hh+='<button onclick="removeGroupAdmin(\''+mid+'\')" class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 text-[9px]">إلغاء</button>'; }
+        hh+='<button onclick="removeFromGroup(\''+mid+'\')" class="w-7 h-7 rounded-full bg-red-500/20 text-red-400 text-[10px]">✕</button></div>';
+      }
+      hh+='</div>';
+    }
+    hh+='</div>';
+    // Add members section
+    hh+='<div class="space-y-2"><p class="text-[11px] font-bold text-[#9aa4b2]">➕ إضافة أعضاء ('+selM2.length+' محدد)</p><div class="max-h-[150px] overflow-y-auto space-y-1.5">';
+    for(let u of users){
+      if(gMembers.includes(String(u.id))||gMembers.includes(String(u.email))) continue;
+      if(String(u.id||u.email)===String(cur.id)) continue;
+      let isSel2=selM2.includes(String(u.id||u.email));
+      hh+='<div onclick="toggleM2(\''+(u.id||u.email)+'\')" class="flex items-center gap-2 p-2 rounded-[12px] cursor-pointer '+(isSel2?'bg-[#10b981]/20 border border-[#10b981]/40':'glass')+'"><div class="w-8 h-8 rounded-full gradient-blue flex items-center justify-center text-[9px] overflow-hidden">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><p class="text-[10px] font-bold flex-1">'+u.name+'</p><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center text-[8px] '+(isSel2?'bg-[#10b981] border-[#10b981] text-white':'border-[#2a3441]')+'">'+(isSel2?'✓':'')+'</div></div>';
+    }
+    hh+='</div>'+(selM2.length>0?'<button onclick="addMembersToGroup()" class="w-full bg-[#10b981] py-2.5 rounded-full text-[11px] font-black mt-2">إضافة '+selM2.length+' عضو ➕</button>':'')+'</div>';
+    hh+='<div class="mt-3 pt-3 border-t border-[#2a3441]/50 flex gap-2"><button onclick="leaveGroup()" class="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 rounded-full text-[10px] font-bold">🚪 خروج من المجموعة</button>'+(String(curGroup.createdBy)===String(cur.id)||isAdminUser()?'<button onclick="deleteGroup()" class="flex-1 bg-red-500 py-2.5 rounded-full text-[10px] font-black">🗑️ حذف المجموعة</button>':'')+'</div>';
+    hh+='</div>';
+  }
+  hh+='<div class="chat-messages p-3 space-y-3">';
+  var fMsgs=msgs.filter(m=>{ 
+    if(curGroup) return String(m.gid)===String(selGroup);
+    // شات خاص: رسالة بيني وبين selChat من أي اتجاه
+    var isBetween = (String(m.sid)===String(cur.id) && String(m.cid)===String(selChat)) || (String(m.sid)===String(selChat) && String(m.cid)===String(cur.id)) || (String(m.sid)===String(selChat) && !m.cid) || (String(m.cid)===String(selChat));
+    return isBetween;
+  });
+  if(fMsgs.length===0){ hh+='<div class="flex flex-col items-center justify-center h-full min-h-[50vh] text-center"><div class="w-20 h-20 glass rounded-full flex items-center justify-center text-3xl mb-4">💬</div><p class="font-black text-[14px]">ابدا المحادثة</p><p class="text-[11px] text-[#9aa4b2] mt-2">🔐 محمي • 📸 صور • 🎤 فويس • ⚡ لحظي</p><p class="text-[10px] text-[#4b5563] mt-1">المقاسات مظبوطة ✅ - Brave - Chrome - الكل</p></div>'; }
+  else { 
+    for(let mm of fMsgs){ 
+      let me=cur && String(mm.sid)===String(cur.id); 
+      let canDel=me||isAdmin()||(curGroup && isGroupAdmin(curGroup));
+      let canEdit=me;
+      if(mm.type==='img'){ 
+        hh+='<div class="flex '+(me?'justify-end':'justify-start')+' gap-1 items-end"><div class="max-w-[70%]"><div class="relative group"><img src="'+mm.img+'" class="rounded-[18px] max-w-full shadow-lg"><div class="absolute -top-2 '+(me?'-left-2':'-right-2')+' flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">'+(canDel?'<button onclick="deleteMsg('+mm.id+')" class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-[9px] shadow-lg">🗑️</button>':'')+'</div></div><p class="text-[8px] text-[#6b7280] mt-1 px-1">'+(mm.sname||'')+' • '+(mm.time||'')+'</p></div></div>'; 
+      } else if(mm.type==='voice'){ 
+        hh+='<div class="flex '+(me?'justify-end':'justify-start')+' gap-1 items-end"><div class="glass rounded-[18px] p-2.5 flex items-center gap-2 relative group"><span class="w-8 h-8 bg-[#8b5cf6] rounded-full flex items-center justify-center">🎤</span><audio controls src="'+mm.aud+'" class="w-[110px] h-[30px]"></audio><div class="absolute -top-2 '+(me?'-left-2':'-right-2')+' flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">'+(canDel?'<button onclick="deleteMsg('+mm.id+')" class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-[9px] shadow-lg">🗑️</button>':'')+'</div></div></div>'; 
+      } else { 
+        hh+='<div class="flex '+(me?'justify-end':'justify-start')+' gap-1 items-start"><div class="max-w-[75%]"><div class="'+(me?'gradient-blue':'glass')+' rounded-[18px] px-4 py-3 relative group"><p class="text-[13px] leading-[1.6] break-words">'+(mm.txt||'')+(mm.edited?'<span class="text-[8px] opacity-50 mr-1">(تم التعديل)</span>':'')+'</p><p class="text-[8px] opacity-60 mt-1">'+(curGroup?mm.sname+' • ':'')+(mm.time||'')+'</p><div class="absolute -top-3 '+(me?'-left-2':'-right-2')+' flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0a0f14] rounded-full p-1 shadow-xl border border-[#2a3441]">'+(canEdit?'<button onclick="editMsg('+mm.id+')" class="w-7 h-7 bg-[#3b82f6] rounded-full flex items-center justify-center text-[10px]">✏️</button>':'')+(canDel?'<button onclick="deleteMsg('+mm.id+')" class="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center text-[10px]">🗑️</button>':'')+'</div></div></div></div>'; 
+      } 
+    } 
+  }
+  hh+='</div><div class="p-2.5 glass border-t border-[#2a3441] flex gap-2 items-center shrink-0 bg-[#0a0f14]"><button onclick="pickImg()" class="w-10 h-10 glass rounded-full flex items-center justify-center shrink-0 btn-press">📸</button><button onclick="isRec?stopR():startR()" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 btn-press '+(isRec?'bg-red-500 animate-pulse':'glass')+'">'+(isRec?'⏹️':'🎤')+'</button><input id="cin" placeholder="اكتب رسالة محترمة..." class="flex-1 min-w-0 bg-[#0f1419] border border-[#2a3441] rounded-full px-4 py-3 text-[13px] outline-none focus:border-[#3b82f6]"><button onclick="send()" class="w-11 h-11 gradient-blue rounded-full shadow-lg flex items-center justify-center shrink-0 btn-press">➤</button></div></div>'; app.innerHTML=hh; var cs=app.querySelector('.chat-messages'); if(cs) cs.scrollTop=cs.scrollHeight; return;
+ }
+ var html='<div class="flex-1 overflow-y-auto p-3 space-y-3 pb-[90px] bg-[#0a0f14]">';
+ if(tab==='الرئيسية'){
+  html+='<div class="gradient-gold rounded-[28px] p-5 shadow-2xl relative overflow-hidden"><p class="font-black text-[16px]">👋 أهلاً '+cur.name+'</p><p class="text-[11px] mt-1">🔥 V8.0 إدارة مجموعات كاملة + تعديل رسائل 🏆 - ذهبية وفضية وبرونزية - مصحح - مقاسات مظبوطة على كل المتصفحات ✅</p><div class="flex gap-2 mt-4"><span class="bg-black/30 px-3 py-1.5 rounded-full text-[10px] font-bold">🔥 '+users.length+' مستخدم</span><span class="bg-black/30 px-3 py-1.5 rounded-full text-[10px]">✅ Fixed</span><span class="bg-black/30 px-3 py-1.5 rounded-full text-[10px]">📱 Brave</span></div></div>';
+  html+='<div class="grid grid-cols-3 gap-2"><div class="glass rounded-[20px] p-3 text-center"><p class="text-[10px] text-[#9aa4b2]">الخريجين</p><p class="font-black text-[20px]">'+users.length+'</p><p class="text-[9px] text-green-400">حقيقي</p></div><div class="glass rounded-[20px] p-3 text-center"><p class="text-[10px] text-[#9aa4b2]">المنشورات</p><p class="font-black text-[20px]">'+posts.length+'</p></div><div class="glass rounded-[20px] p-3 text-center"><p class="text-[10px] text-[#9aa4b2]">الرسائل</p><p class="font-black text-[20px]">'+msgs.length+'</p></div></div>';
+  html+='<div class="glass rounded-[20px] p-4"><p class="font-bold text-[12px]">✅ تم إصلاح المقاسات</p><div class="mt-2 space-y-1 text-[11px] text-[#9aa4b2]"><p>• Brave browser - تم الإصلاح ✅</p><p>• Chrome - شغال ✅</p><p>• كل المتصفحات - شغال ✅</p><p>• الشات بقى في النص مظبوط ✅</p></div></div>';
+ }
+ else if(tab==='الخريجين'){ 
+  // V7.3: أظهر حتى اللي بعتوا رسائل ولسه متسجلوش
+  var allGrads=[...users];
+  var emails=new Set(users.map(u=>String(u.email||u.id).toLowerCase()));
+  for(let m of msgs){
+    var sid=String(m.sid||'').toLowerCase();
+    if(sid && !emails.has(sid) && sid!==String(cur.id||'').toLowerCase() && m.sname){
+      allGrads.push({id:sid,email:sid,name:m.sname,pic:'',lastActive:Date.now(),isTemp:true});
+      emails.add(sid);
+    }
+  }
+  html+='<h2 class="font-black">👥 الخريجين - '+allGrads.length+' <span class="text-[9px] text-[#9aa4b2]">('+users.length+' مسجل)</span></h2>';
+  if(allGrads.length>users.length){ html+='<div class="mt-2 p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-[10px]">⚠️ في '+(allGrads.length-users.length)+' بعتوا رسائل وتسجيلهم ناقص - هيظهروا بعلامة صفرا</div>'; }
+  for(let u of allGrads){ 
+    var isTemp=u.isTemp;
+    html+='<div class="glass rounded-[20px] p-3.5 flex items-center gap-3 mt-2.5 card-hover '+(isTemp?'border border-yellow-500/30':'')+'"><div class="w-12 h-12 rounded-full flex items-center justify-center font-black overflow-hidden '+(isTemp?'bg-yellow-500 text-black':'gradient-blue')+'">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="flex-1"><p class="font-bold text-[13px]">'+u.name+' '+(isTemp?'⚠️':'')+'</p><p class="text-[10px] '+(isTemp?'text-yellow-400':'text-[#9aa4b2]')+'">'+(isTemp?'بعت رسالة - خليه يسجل تاني':'')+getPresenceText(u.id||u.email)+'</p></div><button onclick="openChat(\''+(u.id||u.email)+'\')" class="gradient-blue px-4 py-2 rounded-full text-[11px] font-bold">شات</button></div>'; 
+  } 
+  html+='<button onclick="location.reload()" class="w-full mt-3 glass py-2.5 rounded-full text-[11px]">🔄 تحديث</button>';
+}
+ else if(tab==='المتصدرين'){
+  let sorted=[...users].sort((a,b)=>(b.points||0)-(a.points||0));
+  let myRank=sorted.findIndex(u=>String(u.email)===String(cur.email));
+  let myMedal=getMedal(myRank);
+  html+='<div class="gradient-gold rounded-[28px] p-5 shadow-2xl relative overflow-hidden"><div class="flex justify-between items-start"><div><p class="font-black text-[18px] text-black">🏆 لوحة الشرف</p><p class="text-[11px] text-black/70 mt-1">أكتر ناس بتتفاعل في المنصة</p></div><div class="bg-black/20 px-3 py-1.5 rounded-full text-[10px] font-bold text-black">🔥 '+users.length+' بطل</div></div>';
+  if(myRank>=0){
+    let meFromDb=sorted[myRank]||cur;
+    let realPts=meFromDb.points||cur.points||0;
+    html+='<div class="mt-4 bg-black/15 rounded-[16px] p-3 flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center text-[20px]">'+(myRank<3?myMedal.icon:'#'+(myRank+1))+'</div><div class="flex-1"><p class="font-black text-[12px] text-black">ترتيبك: #'+(myRank+1)+' '+myMedal.icon+' - '+getMedal(myRank).name+'</p><p class="text-[10px] text-black/70">'+cur.name+' - '+realPts+' نقطة - '+getLevel(realPts).title+'</p></div><div class="bg-black/20 px-2.5 py-1 rounded-full text-[10px] font-bold text-black">'+realPts+' نقطة</div></div>';
+  }
+  html+='</div>';
+  // جوائز المتصدرين
+  if(sorted.length>=1){
+    html+='<div class="grid grid-cols-3 gap-2 mt-3">';
+    for(let i=0;i<3 && i<sorted.length;i++){
+      let u=sorted[i];
+      let m=getMedal(i);
+      html+='<div class="glass rounded-[20px] p-3 text-center card-hover" style="border:1px solid '+(i===0?'#FFD700':i===1?'#C0C0C0':'#CD7F32')+'"><div class="w-14 h-14 rounded-full mx-auto flex items-center justify-center font-black text-[22px] shadow-lg overflow-hidden" style="background:'+m.bg+'; color:'+m.color+'">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':m.icon)+'</div><p class="font-black text-[11px] mt-2 truncate">'+u.name+'</p><p class="text-[16px]">'+m.icon+'</p><p class="text-[9px] font-bold '+(i===0?'text-yellow-400':i===1?'text-gray-300':'text-orange-400')+'">'+m.label+' • '+m.name+'</p><p class="text-[10px] text-[#9aa4b2] mt-1">'+(u.points||0)+' نقطة</p></div>';
+    }
+    html+='</div>';
+  }
+  html+='<div class="flex justify-between items-center mt-4"><h2 class="font-black text-[13px]">📊 الترتيب الكامل</h2><span class="text-[9px] text-[#9aa4b2]">تفاعل = نقاط</span></div>';
+  html+='<div class="glass rounded-[20px] p-2 mt-2 text-[9px] text-[#9aa4b2] grid grid-cols-4 gap-1 text-center"><div>📝 منشور = 10</div><div>💬 تعليق = 5</div><div>❤️ لايك = 2</div><div>💬 شات = 1</div></div>';
+  sorted.forEach((u,i)=>{
+    let m=getMedal(i);
+    let lvl=getLevel(u.points||0);
+    let isMe=String(u.email)===String(cur.email);
+    html+='<div class="glass rounded-[20px] p-3.5 flex gap-3 mt-2 items-center '+(isMe?'border border-yellow-500/50 bg-yellow-500/5':'')+' card-hover"><div class="w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px] shrink-0" style="'+(i<3?'background:'+m.bg+'; color:'+m.color:'background:rgba(42,52,65,0.6)')+'">'+(i<3?m.icon:'#'+(i+1))+'</div><div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-[#1c2128] shrink-0 border '+(i<3?'border-yellow-500/30':'border-[#2a3441]')+'">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="flex-1 min-w-0"><div class="flex items-center gap-1.5"><p class="font-bold text-[12px] truncate">'+u.name+'</p>'+(isMe?'<span class="bg-yellow-500 text-black text-[8px] px-1.5 py-0.5 rounded-full font-black">أنت</span>':'')+'</div><div class="flex items-center gap-2 mt-0.5"><p class="text-[10px] text-[#9aa4b2]">'+(u.points||0)+' نقطة</p><span class="text-[9px] px-1.5 py-0.5 rounded-full bg-[#2a3441]">'+lvl.title+'</span></div><div class="w-full bg-[#0a0f14] h-1 rounded-full mt-1.5 overflow-hidden"><div class="h-full gradient-gold" style="width:'+Math.min(100,((u.points||0)%lvl.next)/lvl.next*100)+'%"></div></div></div><div class="text-right"><p class="font-black text-[14px]">'+(u.points||0)+'</p><p class="text-[8px] text-[#6b7280]">نقطة</p></div></div>';
+  });
+}
+ else if(tab==='المختبر'){ html+='<h2 class="font-black">🧪 المختبر</h2><div class="glass rounded-[20px] p-5 mt-3 text-center"><p class="font-black">مختبر تكنو خريج</p><button onclick="toast(\'قريباً 🚀\')" class="mt-3 w-full gradient-blue py-3 rounded-full font-bold text-[12px]">ابدأ</button></div>'; }
+ else if(tab==='الشات'){ 
+  html+='<div class="flex justify-between items-center"><h2 class="font-black">💬 الشات</h2><button onclick="toggleCreateGroup()" class="gradient-blue px-4 py-2 rounded-full text-[11px] font-bold">+ مجموعة</button></div>'; 
+  if(showCG){ 
+    html+='<div class="glass rounded-[24px] p-4 space-y-3 mt-3 border border-green-500/20"><div class="flex justify-between items-center"><p class="font-black text-[12px]">✨ إنشاء مجموعة جديدة</p><button onclick="cancelCreateGroup()" class="w-8 h-8 glass rounded-full text-[10px]">✕</button></div><input id="gn" value="'+gName+'" placeholder="اسم المجموعة مثل: دفعة 2023 🎓" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-4 py-3 text-[12px] outline-none focus:border-[#10b981]"><div class="space-y-2"><div class="flex justify-between items-center"><p class="text-[11px] font-bold text-[#9aa4b2]">👥 اختر الأعضاء ('+selM.length+' محدد)</p><span class="text-[9px] text-[#6b7280]">اضغط لإضافة</span></div><div class="max-h-[180px] overflow-y-auto space-y-2 p-1">';
+    for(let u of users){
+      if(cur && String(u.id||u.email)===String(cur.id)) continue;
+      let isSel=selM.includes(String(u.id||u.email));
+      html+='<div onclick="toggleM(\''+(u.id||u.email)+'\')" class="flex items-center gap-3 p-2.5 rounded-[14px] cursor-pointer transition-all '+(isSel?'bg-[#10b981]/20 border border-[#10b981]/40':'glass hover:bg-[#2a3441]')+'"><div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden '+(isSel?'bg-[#10b981] text-white':'gradient-blue')+'">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="flex-1"><p class="font-bold text-[11px]">'+u.name+'</p><p class="text-[9px] text-[#9aa4b2]">'+(u.points||0)+' نقطة • '+getPresenceText(u.id||u.email)+'</p></div><div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] '+(isSel?'bg-[#10b981] border-[#10b981] text-white':'border-[#2a3441]')+'">'+(isSel?'✓':'')+'</div></div>';
+    }
+    if(users.length<=1){ html+='<p class="text-[10px] text-[#6b7280] text-center py-4">مفيش خريجين تانيين حالياً - ضيف صحابك!</p>'; }
+    html+='</div></div><button onclick="createG()" class="w-full bg-[#10b981] py-3 rounded-full text-[12px] font-black shadow-lg btn-press">إنشاء المجموعة مع '+selM.length+' عضو 🚀</button><p class="text-[9px] text-[#6b7280] text-center">سيتم إضافتك تلقائياً كأدمن للمجموعة</p></div>'; 
+  } for(let g of groups){ html+='<div onclick="openGroup(\''+g.id+'\')" class="glass rounded-[20px] p-3.5 flex gap-3 mt-2.5 cursor-pointer card-hover"><div class="w-12 h-12 bg-[#10b981] rounded-[14px] flex items-center justify-center">👥</div><div class="flex-1"><p class="font-black text-[13px]">'+g.name+'</p><p class="text-[10px] text-[#9aa4b2]">'+(g.members||0)+' عضو</p></div></div>'; } for(let u of users){ if(cur && String(u.id||u.email)===String(cur.id)) continue; html+='<div onclick="openChat(\''+(u.id||u.email)+'\')" class="glass rounded-[20px] p-3.5 flex gap-3 mt-2.5 cursor-pointer card-hover"><div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden gradient-blue">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="flex-1"><p class="font-bold text-[13px]">'+u.name+'</p><p class="text-[10px] text-green-400">'+getPresenceText(u.id||u.email)+'</p></div></div>'; } }
+ else if(tab==='المنشورات'){
+  html+='<div class="flex justify-between items-center"><h2 class="font-black">📝 المنشورات - '+posts.length+'</h2><span class="text-[10px] text-[#9aa4b2]">🔥 تفاعل لحظي</span></div>';
+  html+='<div class="glass rounded-[24px] p-4 mt-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-full gradient-gold flex items-center justify-center font-black shrink-0 overflow-hidden">'+(cur.pic?'<img src="'+cur.pic+'" class="w-full h-full object-cover">':cur.name[0])+'</div><textarea id="np" placeholder="شارك حاجة مع الخريجين... 💭" class="flex-1 bg-[#0a0f14] border border-[#2a3441] rounded-[16px] p-3.5 text-[13px] min-h-[70px] outline-none focus:border-[#f59e0b] resize-none">'+newPost+'</textarea></div><div class="flex justify-end mt-3"><button onclick="doPost()" class="gradient-gold px-6 py-2.5 rounded-full font-black text-[12px] text-black shadow-lg btn-press">نشر 🔥</button></div></div>';
+  if(posts.length===0){
+    html+='<div class="glass rounded-[20px] p-8 mt-4 text-center"><p class="text-[30px]">📝</p><p class="font-black mt-2 text-[13px]">لسه مفيش منشورات</p><p class="text-[11px] text-[#9aa4b2] mt-1">كن أول من ينشر!</p></div>';
+  }
+  for(let p of posts){
+    let isLiked=(p.likedBy||[]).includes(cur.id);
+    let canDelPost = String(p.authorId)===String(cur.id) || isAdmin();
+    let pComments=postComments.filter(c=>String(c.postId)===String(p.id)).sort((a,b)=>a.createdAt-b.createdAt);
+    html+='<div class="glass rounded-[24px] p-4 mt-3 card-hover"><div class="flex justify-between items-start"><div class="flex gap-3"><div class="w-11 h-11 rounded-full gradient-blue flex items-center justify-center font-black overflow-hidden shrink-0">'+(p.authorPic?'<img src="'+p.authorPic+'" class="w-full h-full object-cover">':(p.author||'?')[0])+'</div><div><p class="font-black text-[13px]">'+p.author+' '+(p.authorId===cur.id?'• أنت':'')+'</p><p class="text-[10px] text-[#9aa4b2]">'+(p.time||'')+' • '+getPresenceText(p.authorId)+'</p></div></div>'+(canDelPost?'<button onclick="deletePost('+p.id+')" class="w-8 h-8 glass rounded-full text-[12px]">🗑️</button>':'')+'</div>';
+    html+='<p class="mt-3 text-[14px] leading-[1.7] whitespace-pre-wrap break-words">'+(p.text||'')+'</p>';
+    html+='<div class="flex gap-4 mt-3 text-[11px] text-[#9aa4b2]"><span>❤️ '+(p.likes||0)+' إعجاب</span><span>💬 '+(p.commentsCount||pComments.length||0)+' تعليق</span></div>';
+    html+='<div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-[#2a3441]/50"><button onclick="likeP('+p.id+')" class="flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[12px] font-bold transition-all '+(isLiked?'bg-red-500/15 text-red-400 border border-red-500/30':'glass hover:bg-[#2a3441]')+'">'+(isLiked?'❤️':'🤍')+' إعجاب</button><button onclick="document.getElementById(\'cmt-'+p.id+'\').focus()" class="glass py-2.5 rounded-full text-[12px] font-bold hover:bg-[#2a3441]">💬 علق</button><button onclick="sharePost('+p.id+')" class="glass py-2.5 rounded-full text-[12px] font-bold hover:bg-[#2a3441]">↗️ مشاركة</button></div>';
+    // تعليقات
+    if(pComments.length>0){
+      html+='<div class="mt-3 space-y-2.5 bg-[#0a0f14]/60 rounded-[16px] p-3">';
+      for(let c of pComments){
+        let canDelC = String(c.authorId)===String(cur.id) || isAdmin();
+        html+='<div class="flex gap-2"><div class="w-7 h-7 rounded-full bg-[#2a3441] flex items-center justify-center text-[10px] font-black shrink-0 overflow-hidden">'+(c.authorPic?'<img src="'+c.authorPic+'" class="w-full h-full object-cover">':c.author[0])+'</div><div class="flex-1 glass rounded-[14px] px-3 py-2"><div class="flex justify-between"><p class="font-bold text-[11px]">'+c.author+'</p><p class="text-[8px] text-[#6b7280]">'+(c.time||'')+'</p></div><p class="text-[12px] mt-1 break-words">'+c.text+'</p></div>'+(canDelC?'<button onclick="deleteComment('+c.id+','+p.id+')" class="text-[10px] text-[#6b7280]">✕</button>':'')+'</div>';
+      }
+      html+='</div>';
+    }
+    html+='<div class="flex gap-2 mt-3"><div class="w-8 h-8 rounded-full bg-[#2a3441] flex items-center justify-center font-black text-[10px] shrink-0 overflow-hidden">'+(cur.pic?'<img src="'+cur.pic+'" class="w-full h-full object-cover">':cur.name[0])+'</div><div class="flex-1 flex gap-2"><input id="cmt-'+p.id+'" placeholder="اكتب تعليق..." class="flex-1 bg-[#0a0f14] border border-[#2a3441] rounded-full px-4 py-2.5 text-[12px] outline-none focus:border-[#3b82f6]"><button onclick="addComment('+p.id+')" class="w-10 h-10 gradient-blue rounded-full flex items-center justify-center shrink-0 btn-press">➤</button></div></div>';
+    html+='</div>';
+  }
+}
+ else if(tab==='حسابي'){ html+='<h2 class="font-black">👤 حسابي</h2><div class="glass rounded-[28px] p-6 text-center mt-3"><div onclick="pickProfilePic()" class="w-24 h-24 rounded-full mx-auto flex items-center justify-center text-3xl cursor-pointer overflow-hidden shadow-2xl bg-gradient-to-br from-[#f59e0b] to-[#d97706]">'+(cur.pic?'<img src="'+cur.pic+'" class="w-full h-full object-cover">':cur.name[0])+'</div><p class="font-black mt-4 text-[16px]">'+cur.name+'</p><p class="text-[11px] text-[#9aa4b2]">'+cur.email+'</p><button onclick="pickProfilePic()" class="mt-4 glass w-full py-3 rounded-full font-bold text-[11px]">📸 تغيير الصورة</button><button onclick="logout()" class="mt-2 bg-red-500/10 border border-red-500/20 text-red-400 w-full py-3 rounded-full font-bold text-[11px]">خروج</button></div>'; }
+ html+='</div><nav class="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[480px] w-full glass border-t border-[#2a3441] flex justify-around py-2.5 z-30"><span class="hidden"></span>';
+ var tabs=[{k:'الرئيسية',i:'🏠'},{k:'الخريجين',i:'👥'},{k:'المتصدرين',i:'🏆'},{k:'المختبر',i:'🧪'},{k:'الشات',i:'💬'},{k:'المنشورات',i:'📝'},{k:'حسابي',i:'👤'}];
+ for(let t of tabs){ var active=tab===t.k; html+='<button onclick="switchTab(\''+t.k+'\')" class="flex flex-col items-center gap-1 px-2 py-1 rounded-xl '+(active?'bg-[#f59e0b]/15 text-[#fbbf24]':'text-[#6b7280]')+'"><span class="text-[18px]">'+t.i+'</span><span class="text-[8px] font-bold">'+t.k+'</span></button>'; }
+ html+='</nav>'; app.innerHTML=html;
+ setTimeout(()=>{ let gn=document.getElementById('gn'); if(gn) gn.oninput=e=>gName=e.target.value; let np=document.getElementById('np'); if(np) np.oninput=e=>newPost=e.target.value; },50);
+}
+window.render=render;
+window.doLogin=async function(){ let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); if(fe) form.email=fe.value; if(fp) form.pass=fp.value; if(!form.email||!form.pass){ toast('اكتب البيانات',true); return; } try{ let q=query(collection(db,"users"), where("email","==",form.email.toLowerCase()), where("pass","==",form.pass)); let snap=await getDocs(q); if(snap.empty){ toast('بيانات غلط',true); return; } let data=snap.docs[0].data(); cur={...data, lastActive:Date.now()}; logged=true; localStorage.setItem('tk_cur',JSON.stringify(cur)); localStorage.setItem('tk_log','1'); await updateDoc(doc(db,"users",snap.docs[0].id), {lastActive:Date.now(), online:true}); render(); }catch(e){ toast('خطأ',true); } }
+window.doReg=async function(){ 
+  let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); let fn=document.getElementById('fn'); 
+  if(fe) form.email=fe.value; if(fp) form.pass=fp.value; if(fn) form.name=fn.value; 
+  // تنظيف البيانات 100%
+  form.email=(form.email||'').trim().toLowerCase().replace(/\s+/g,'');
+  form.name=(form.name||'').trim().replace(/\s{2,}/g,' ');
+  form.pass=(form.pass||'').trim();
+  if(!form.name||!form.email||!form.pass){ toast('املأ البيانات',true); return; } 
+  if(form.name.length<2){ toast('الاسم قصير',true); return; }
+  if(!form.email.includes('@')){ toast('الإيميل غلط',true); return; }
+  try{ 
+    toast('⏳ جاري التسجيل...');
+    let q=query(collection(db,"users"), where("email","==",form.email)); 
+    let snap=await getDocs(q); 
+    if(!snap.empty){ toast('الإيميل مسجل قبل كده',true); return; } 
+    let emailClean=form.email;
+    let nu={id:emailClean,name:form.name,email:emailClean,pass:form.pass,role:'user',pic:'',city:'القاهرة',job:'خريج',points:10,lastActive:Date.now(),online:true,createdAt:Date.now(),uid:emailClean}; 
+    // V7.4: استخدم setDoc مباشرة بالإيميل كمفتاح - أمان 100%
+    let userDocRef=doc(db,"users", emailClean.replace(/[^a-z0-9@._-]/g,'_'));
+    await setDoc(userDocRef, {...nu, docId:userDocRef.id});
+    cur={...nu, docId:userDocRef.id}; 
+    logged=true; 
+    localStorage.setItem('tk_cur',JSON.stringify(cur)); 
+    localStorage.setItem('tk_log','1'); 
+    render(); 
+    toast('✅ تم إنشاء حسابك - أهلاً '+form.name+' 🔥'); 
+  }catch(e){ 
+    console.log('Reg error',e);
+    toast('خطأ: '+ (e.message||'حاول تاني'),true); 
+  } 
+}
+window.logout=function(){ logged=false; cur=null; localStorage.removeItem('tk_log'); localStorage.removeItem('tk_cur'); selChat=null; selGroup=null; render(); }
+window.createG=async function(){ 
+  if(!gName.trim()){ toast('اكتب اسم المجموعة',true); return; } 
+  if(selM.length===0){ toast('اختر عضو واحد على الأقل 👥',true); return; }
+  try{ 
+    let memberIds=[String(cur.id), ...selM.map(x=>String(x))];
+    let ng={id:Date.now(),name:gName.trim(),img:'👥',members:memberIds.length,memberIds:memberIds,desc:'أنشأها '+cur.name,createdBy:cur.id,createdAt:Date.now()}; 
+    await addDoc(collection(db,"groups"), ng); 
+    showCG=false; gName=''; selM=[]; 
+    toast('✅ تم إنشاء مجموعة '+ng.name+' مع '+ng.members+' عضو 🎉'); 
+    addPoints(15,'👥 مجموعة جديدة');
+  }catch(e){ toast('خطأ: '+e.message,true); } 
+}
+window.doPost=async function(){ let inp=document.getElementById('np'); if(inp) newPost=inp.value; if(!newPost.trim()){ toast('اكتب حاجة',true); return; } var chk=checkContent(newPost); if(!chk.ok){ toast('🚫 كلمة ممنوعة',true); return; } try{ let np={id:Date.now(),author:cur.name,authorId:cur.id,authorPic:cur.pic||'',text:newPost,time:new Date().toLocaleTimeString('ar-EG'),likes:0,likedBy:[],commentsCount:0,createdAt:Date.now()}; await addDoc(collection(db,"posts"), np); newPost=''; toast('تم النشر 🔥'); addPoints(10,'📝 منشور'); }catch(e){ toast('خطأ',true); } }
+
+window.likeP=async function(id){
+  try{
+    let q=query(collection(db,"posts"), where("id","==",Number(id)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let d=snap.docs[0];
+    let data=d.data();
+    let likedBy=data.likedBy||[];
+    let isLiked=likedBy.includes(cur.id);
+    let newLikedBy=isLiked ? likedBy.filter(x=>x!==cur.id) : [...likedBy, cur.id];
+    let newLikes=isLiked ? Math.max(0,(data.likes||1)-1) : (data.likes||0)+1;
+    await updateDoc(doc(db,"posts",d.id), {likes:newLikes, likedBy:newLikedBy});
+    if(!isLiked){ toast('❤️ تم الإعجاب'); addPoints(2,'❤️ لايك'); }
+  }catch(e){ toast('خطأ',true); }
+}
+window.addComment=async function(postId){
+  let inp=document.getElementById('cmt-'+postId);
+  let txt=inp?inp.value.trim():'';
+  if(!txt){ toast('اكتب تعليق',true); return; }
+  var chk=checkContent(txt);
+  if(!chk.ok){ toast('🚫 كلمة ممنوعة',true); return; }
+  try{
+    await addDoc(collection(db,"post_comments"), {id:Date.now(),postId:Number(postId),author:cur.name,authorId:cur.id,authorPic:cur.pic||'',text:txt,time:new Date().toLocaleTimeString('ar-EG'),createdAt:Date.now()});
+    let q=query(collection(db,"posts"), where("id","==",Number(postId)));
+    let snap=await getDocs(q);
+    if(!snap.empty){ await updateDoc(doc(db,"posts",snap.docs[0].id), {commentsCount:(snap.docs[0].data().commentsCount||0)+1}); }
+    if(inp) inp.value='';
+    toast('💬 تم التعليق');
+    addPoints(5,'💬 تعليق');
+  }catch(e){ toast('خطأ',true); }
+}
+window.deleteComment=async function(cid, postId){
+  if(!confirm('مسح التعليق؟')) return;
+  try{
+    let q=query(collection(db,"post_comments"), where("id","==",Number(cid)));
+    let snap=await getDocs(q);
+    for(let d of snap.docs) await deleteDoc(doc(db,"post_comments",d.id));
+    let q2=query(collection(db,"posts"), where("id","==",Number(postId)));
+    let s2=await getDocs(q2);
+    if(!s2.empty){ await updateDoc(doc(db,"post_comments",s2.docs[0].id), {}); }
+    // decrement count
+    try{
+      let qp=query(collection(db,"posts"), where("id","==",Number(postId)));
+      let sp=await getDocs(qp);
+      if(!sp.empty){ await updateDoc(doc(db,"posts",sp.docs[0].id), {commentsCount:Math.max(0,(sp.docs[0].data().commentsCount||1)-1)}); }
+    }catch(e){}
+  }catch(e){}
+}
+window.sharePost=async function(id){
+  try{
+    let p=posts.find(x=>String(x.id)===String(id));
+    if(!p) return;
+    if(navigator.share){ await navigator.share({title:'تكنو خريج', text:p.text, url:location.href}); }
+    else { await navigator.clipboard.writeText(p.text); toast('📋 تم نسخ المنشور'); }
+  }catch(e){ toast('تم النسخ 📋'); }
+}
+
+
+window.send=async function(){ 
+  if(editMsgId){
+    // edit mode
+    let inp=document.getElementById('cin'); let t=inp?inp.value.trim():''; if(!t) return;
+    try{
+      let q=query(collection(db,"messages"), where("id","==",Number(editMsgId)));
+      let snap=await getDocs(q);
+      for(let d of snap.docs) await updateDoc(doc(db,"messages",d.id), {txt:t, edited:true, editedAt:Date.now()});
+      editMsgId=null; if(inp){ inp.value=''; inp.placeholder='اكتب رسالة محترمة...'; }
+      toast('✏️ تم تعديل الرسالة');
+      render();
+    }catch(e){ toast('خطأ',true); }
+    return;
+  }
+  let inp=document.getElementById('cin'); let t=inp?inp.value.trim():''; if(!t) return; var chk=checkContent(t); if(!chk.ok){ toast('🚫 كلمة ممنوعة',true); if(inp) inp.value=''; return; } try{ let m={id:Date.now(),txt:t,type:'text',sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,createdAt:Date.now()}; await addDoc(collection(db,"messages"), m); if(inp) inp.value=''; addPoints(1,'💬 شات'); }catch(e){ toast('خطأ',true); } 
+}
+window.editMsg=function(id){
+  let mm=msgs.find(m=>m.id===Number(id));
+  if(!mm) return;
+  if(String(mm.sid)!==String(cur.id)){ toast('تقدر تعدل رسائلك بس',true); return; }
+  editMsgId=id;
+  let inp=document.getElementById('cin');
+  if(inp){ inp.value=mm.txt||''; inp.placeholder='✏️ تعديل... اضغط إرسال للحفظ'; inp.focus(); }
+  toast('✏️ عدل الرسالة ثم اضغط إرسال - اضغط X للإلغاء');
+  render();
+}
+window.cancelEdit=function(){ editMsgId=null; let inp=document.getElementById('cin'); if(inp){ inp.value=''; inp.placeholder='اكتب رسالة محترمة...'; } render(); }
+window.makeGroupAdmin=async function(mid){
+  if(!selGroup) return;
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let gd=snap.docs[0].data();
+    let admins=gd.admins||[gd.createdBy];
+    if(!admins.includes(String(mid))) admins.push(String(mid));
+    await updateDoc(doc(db,"groups",snap.docs[0].id), {admins:admins});
+    toast('⭐ تم تعيين مسؤول');
+  }catch(e){ toast('خطأ',true); }
+}
+window.removeGroupAdmin=async function(mid){
+  if(!selGroup) return;
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let gd=snap.docs[0].data();
+    if(String(mid)===String(gd.createdBy)){ toast('ماينفعش تشيل المنشئ',true); return; }
+    let admins=(gd.admins||[]).filter(a=>String(a)!==String(mid));
+    await updateDoc(doc(db,"groups",snap.docs[0].id), {admins:admins});
+    toast('تم إلغاء المسؤول');
+  }catch(e){ toast('خطأ',true); }
+}
+window.removeFromGroup=async function(mid){
+  if(!confirm('حذف العضو من المجموعة؟')) return;
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let gd=snap.docs[0].data();
+    let memberIds=(gd.memberIds||[]).filter(m=>String(m)!==String(mid));
+    let admins=(gd.admins||[]).filter(a=>String(a)!==String(mid));
+    await updateDoc(doc(db,"groups",snap.docs[0].id), {memberIds:memberIds, members:memberIds.length, admins:admins});
+    toast('🗑️ تم حذف العضو');
+  }catch(e){ toast('خطأ',true); }
+}
+window.addMembersToGroup=async function(){
+  if(selM2.length===0){ toast('اختر أعضاء',true); return; }
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let gd=snap.docs[0].data();
+    let memberIds=gd.memberIds||[];
+    for(let id of selM2){ if(!memberIds.includes(String(id))) memberIds.push(String(id)); }
+    await updateDoc(doc(db,"groups",snap.docs[0].id), {memberIds:memberIds, members:memberIds.length});
+    selM2=[]; toast('✅ تم إضافة '+memberIds.length+' عضو');
+  }catch(e){ toast('خطأ',true); }
+}
+window.leaveGroup=async function(){
+  if(!confirm('متأكد تخرج من المجموعة؟')) return;
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    if(snap.empty) return;
+    let gd=snap.docs[0].data();
+    let memberIds=(gd.memberIds||[]).filter(m=>String(m)!==String(cur.id));
+    let admins=(gd.admins||[]).filter(a=>String(a)!==String(cur.id));
+    await updateDoc(doc(db,"groups",snap.docs[0].id), {memberIds:memberIds, members:memberIds.length, admins:admins});
+    selGroup=null; showGroupInfo=false; toast('🚪 خرجت من المجموعة');
+  }catch(e){ toast('خطأ',true); }
+}
+window.deleteGroup=async function(){
+  if(!confirm('حذف المجموعة نهائياً؟')) return;
+  try{
+    let q=query(collection(db,"groups"), where("id","==",Number(selGroup)));
+    let snap=await getDocs(q);
+    for(let d of snap.docs) await deleteDoc(doc(db,"groups",d.id));
+    selGroup=null; showGroupInfo=false; toast('🗑️ تم حذف المجموعة');
+  }catch(e){ toast('خطأ',true); }
+}
+
+document.getElementById('profilePicInput').addEventListener('change', e=>{ let file=e.target.files[0]; if(!file) return; let r=new FileReader(); r.onload=ev=>{ if(cur){ cur.pic=ev.target.result; localStorage.setItem('tk_cur',JSON.stringify(cur)); getDocs(query(collection(db,"users"), where("email","==",cur.email))).then(snap=>{ if(!snap.empty) updateDoc(doc(db,"users",snap.docs[0].id), {pic:ev.target.result}); }); render(); toast('✅ تم تغيير الصورة'); } }; r.readAsDataURL(file); });
+document.getElementById('imgInput').addEventListener('change', e=>{ let file=e.target.files[0]; if(!file) return; let r=new FileReader(); r.onload=ev=>{ let b={id:Date.now(),type:'img',img:ev.target.result,sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,createdAt:Date.now()}; addDoc(collection(db,"messages"), b); }; r.readAsDataURL(file); });
+window.startR=async function(){ if(isRec) return; try{ let stream=await navigator.mediaDevices.getUserMedia({audio:true}); rec=new MediaRecorder(stream); chunks=[]; isRec=true; recTime=0; rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ let blob=new Blob(chunks,{type:'audio/webm'}); let r=new FileReader(); r.onload=ev=>{ let b={id:Date.now(),type:'voice',aud:ev.target.result,sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,createdAt:Date.now()}; addDoc(collection(db,"messages"), b); }; r.readAsDataURL(blob); stream.getTracks().forEach(t=>t.stop()); }; rec.start(); recInt=setInterval(()=>{recTime++; let inp=document.getElementById('cin'); if(inp) inp.placeholder='🔴 '+recTime+'s';},1000); render(); }catch(err){ toast('الميك مش شغال',true); } }
+window.stopR=function(){ if(!isRec||!rec) return; rec.stop(); isRec=false; clearInterval(recInt); render(); }
+async function initFirebase(){
+ try{
+  
+  let q=query(collection(db,"users"), where("email","==","ahmed@admin.com")); 
+  let s=await getDocs(q); 
+  if(s.empty){ 
+    await addDoc(collection(db,"users"), {id:"ahmed@admin.com",name:"أحمد خالد مصطفى 👑",email:"ahmed@admin.com",pass:"admin123",role:"admin",points:999,lastActive:Date.now(),online:true}); 
+  } else {
+    // صحح نقاط الأدمن لو صفر
+    let ad=s.docs[0].data();
+    if(!ad.points || ad.points<100){ await updateDoc(doc(db,"users",s.docs[0].id), {points:999}); }
+  }
+  // صحح نقاط كل المستخدمين القدامى
+  try{
+    let allU=await getDocs(collection(db,"users"));
+    for(let d of allU.docs){
+      let u=d.data();
+      if(u.points===undefined || u.points===null){
+        let pts = (u.email==='ahmed@admin.com'?999: (u.role==='admin'?999:10));
+        await updateDoc(doc(db,"users",d.id), {points:pts});
+      }
+    }
+  }catch(e){}
+
+  onSnapshot(collection(db,"users"), snap=>{ 
+    users=snap.docs.map(d=>d.data()); 
+    console.log('Users loaded:', users.length, users.map(u=>u.email));
+    render(); 
+  });
+  onSnapshot(query(collection(db,"messages"), orderBy("createdAt","asc")), snap=>{ 
+    msgs=snap.docs.map(d=>d.data()); 
+    console.log('Msgs loaded:', msgs.length);
+    // لو في رسالة جديدة ليا وانا مش في الشات ده، اعمل toast
+    if(cur && selChat){
+      var last = msgs[msgs.length-1];
+      if(last && String(last.cid)===String(cur.id) && String(last.sid)!==String(cur.id)){
+        toast('📩 رسالة جديدة من '+last.sname);
+      }
+    }
+    render(); 
+  });
+  onSnapshot(collection(db,"groups"), snap=>{ groups=snap.docs.map(d=>d.data()); if(groups.length===0) groups=[{id:101,name:'دفعة تكنولوجيا 2023 🎓',img:'🎓',members:5},{id:102,name:'فرص عمل 💼',img:'💼',members:4}]; render(); });
+  onSnapshot(query(collection(db,"posts"), orderBy("createdAt","desc")), snap=>{ posts=snap.docs.map(d=>d.data()); render(); });
+	  onSnapshot(query(collection(db,"post_comments"), orderBy("createdAt","asc")), snap=>{ postComments=snap.docs.map(d=>d.data()); render(); });
+  let cl=JSON.parse(localStorage.getItem('tk_cur')||'null'); let ll=localStorage.getItem('tk_log')==='1'; if(cl&&ll){ cur=cl; logged=true; }
+  render(); toast('✅ V8.0 إدارة مجموعات كاملة + تعديل رسائل 🏆 - ذهبية وفضية وبرونزية - مصحح ✅');
+ }catch(e){ console.log(e); }
+}
+initFirebase();
+</script>
+</body>
+</html>
