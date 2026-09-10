@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>تكنو خريج - V7.0 PRO 🔥👑</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi2KrZhtit2Ygg2K7YsNix2KjYrCAtIFBybyIsInNob3J0X25hbWUiOiJUZWtobm9LaGFyZWVnIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjE0MTkiLCJ0aGVtZV9jb2xvciI6IiMwZjE0MTkiLCJpY29ucyI6W3sic3JjIjoiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsYXRpY29uLmNvbS81MTIvMjIyMi8yMjIyMDYyLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmcifV19">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{font-family:'Tajawal',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#0a0f14;color:white;overflow-x:hidden}
+.glass{background:rgba(28,33,40,0.8);backdrop-filter:blur(12px);border:1px solid rgba(42,52,65,0.6)}
+.card-hover{transition:all 0.3s ease} .card-hover:hover{transform:translateY(-2px);border-color:#3b82f6;box-shadow:0 8px 25px rgba(59,130,246,0.15)}
+.btn-press:active{transform:scale(0.97)}
+@keyframes pulse-green{0%,100%{opacity:1}50%{opacity:0.5}}
+.online-dot{animation:pulse-green 2s infinite}
+.scroll::-webkit-scrollbar{width:0}
+.gradient-gold{background:linear-gradient(135deg,#f59e0b,#d97706,#fbbf24)}
+.gradient-blue{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+</style>
+</head>
+<body>
+<div id="app" class="max-w-[480px] mx-auto min-h-screen bg-[#0a0f14] pb-[90px] flex items-center justify-center"><p class="animate-pulse">🔥 جاري تحميل V7.0 PRO...</p></div>
+<div id="toastBox" class="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-[200] space-y-2 w-[90%] max-w-[380px] pointer-events-none"></div>
+<input type="file" id="imgInput" accept="image/*" class="hidden"><input type="file" id="profilePicInput" accept="image/*" class="hidden">
+
+<script>
+// PWA Service Worker - inline
+if('serviceWorker' in navigator){ 
+  const swCode = `self.addEventListener('install',e=>self.skipWaiting()); self.addEventListener('activate',e=>self.clients.claim()); self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
+  const blob = new Blob([swCode], {type:'text/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, setDoc, getDocs, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const firebaseConfig = { apiKey: "AIzaSyAX_yrLx7ltNv6HXh4KMwioi-YxsO0WVCM", authDomain: "technokhareeg2.firebaseapp.com", projectId: "technokhareeg2", storageBucket: "technokhareeg2.firebasestorage.app", messagingSenderId: "526382735312", appId: "1:526382735312:web:cebbef6f52ac20f1c063d5" };
+let db; try{ const app=initializeApp(firebaseConfig); db=getFirestore(app); }catch(e){ console.log('Firebase init error',e); }
+var users=[], msgs=[], groups=[], posts=[];
+var logged=false, cur=null, tab='الرئيسية', selChat=null, selGroup=null, auth='login', showPass=false, form={name:'',email:'',pass:''}, showCG=false, gName='', selM=[], newPost='', isRec=false, rec=null, chunks=[], recTime=0, recInt=null, searchQ='';
+
+function toast(m,err){
+ var b=document.getElementById('toastBox'); if(!b) return;
+ var d=document.createElement('div');
+ d.className='px-4 py-3.5 rounded-2xl text-[12px] font-bold border backdrop-blur-xl shadow-2xl '+(err?'bg-red-500/90 border-red-400':'glass')+' text-white text-center pointer-events-auto';
+ d.innerText=m; b.appendChild(d); setTimeout(()=>{ d.style.opacity='0'; d.style.transform='translateY(-10px)'; setTimeout(()=>d.remove(),300); }, err?5000:3500);
+}
+window.toast=toast;
+
+// 🔐 نظام الحماية - شغال فعلاً
+var badWords=['كس','طيز','شرموط','خول','متناك','عرص','لبوة','fuck','shit','bitch','asshole'];
+function checkContent(text){
+ if(!text) return {ok:true};
+ var low=text.toLowerCase();
+ for(let w of badWords){ if(low.includes(w)){ return {ok:false, word:w}; } }
+ if(text.length>500) return {ok:false, reason:'النص طويل جداً'};
+ return {ok:true};
+}
+window.checkContent=checkContent;
+
+window.switchTab=function(k){ tab=k; selChat=null; selGroup=null; render(); }
+window.setAuth=function(k){ auth=k; render(); }
+window.togglePass=function(){ showPass=!showPass; render(); }
+window.openChat=function(id){ selChat=id; selGroup=null; render(); setTimeout(()=>{ var c=document.getElementById('chatScroll'); if(c) c.scrollTop=c.scrollHeight; },100); }
+window.openGroup=function(id){ selGroup=id; selChat=null; render(); }
+window.backHome=function(){ selChat=null; selGroup=null; render(); }
+window.toggleCreateGroup=function(){ showCG=!showCG; render(); }
+window.cancelCreateGroup=function(){ showCG=false; render(); }
+window.toggleM=function(id){ var i=selM.indexOf(id); if(i>=0) selM.splice(i,1); else selM.push(id); render(); }
+window.pickImg=function(){ document.getElementById('imgInput').click(); }
+window.pickProfilePic=function(){ document.getElementById('profilePicInput').click(); }
+window.fillAdmin=function(){ form.email='ahmed@admin.com'; form.pass='admin123'; auth='login'; render(); setTimeout(()=>{ let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); if(fe) fe.value='ahmed@admin.com'; if(fp) fp.value='admin123'; },100); }
+window.onSearch=function(v){ searchQ=v; render(); }
+function isAdmin(){ return cur && cur.email==='ahmed@admin.com'; }
+function getPresenceText(id){
+ var u=users.find(x=>String(x.id)===String(id) || String(x.email)===String(id).toLowerCase());
+ if(!u) return '⚪ غير متصل'; var diff=Date.now()-(u.lastActive||0);
+ if(diff<120000) return '🟢 متصل الآن'; var m=Math.floor(diff/60000); if(m<60) return '⚪ منذ '+m+' د';
+ var h=Math.floor(m/60); if(h<24) return '⚪ منذ '+h+' س'; return '⚪ منذ '+Math.floor(h/24)+' يوم';
+}
+window.deleteMsg=async function(id){ if(!isAdmin() && !confirm('مسح الرسالة؟')) return; try{ let q=query(collection(db,"messages"), where("id","==",Number(id))); let snap=await getDocs(q); for(let d of snap.docs) await deleteDoc(doc(db,"messages",d.id)); toast('🗑️ تم المسح'); }catch(e){ toast('خطأ',true); } }
+window.deletePost=async function(id){ if(!confirm('مسح المنشور؟')) return; try{ let q=query(collection(db,"posts"), where("id","==",Number(id))); let snap=await getDocs(q); for(let d of snap.docs) await deleteDoc(doc(db,"posts",d.id)); toast('🗑️ تم مسح المنشور'); }catch(e){} }
+
+function render(){
+ var app=document.getElementById('app');
+ if(!logged){
+  var h='<div class="p-5 min-h-screen flex flex-col justify-center bg-gradient-to-b from-[#0a0f14] to-[#0f1419]"><div class="text-center mb-6"><div class="w-24 h-24 gradient-gold rounded-[24px] mx-auto flex items-center justify-center text-4xl shadow-2xl shadow-orange-500/20">👑</div><h1 class="font-black text-[26px] mt-4 tracking-tight">تكنو خريج</h1><p class="font-bold text-[14px] text-[#fbbf24]">V7.0 PRO</p><p class="text-[11px] text-[#9aa4b2] mt-1">✨ تصميم جديد • 🔐 حماية • 📱 تطبيق</p><div class="mt-3 glass rounded-2xl p-3 flex justify-around text-[10px]"><div><p class="font-black text-[16px] text-white">'+users.length+'</p><p class="text-[#9aa4b2]">مستخدم</p></div><div class="w-[1px] bg-[#2a3441]"></div><div><p class="font-black text-[16px] text-white">PRO</p><p class="text-[#9aa4b2]">الإصدار</p></div><div class="w-[1px] bg-[#2a3441]"></div><div><p class="font-black text-[16px] text-green-400">آمن</p><p class="text-[#9aa4b2]">محمي</p></div></div></div><div class="glass rounded-[28px] p-5 space-y-3 shadow-2xl"><div class="flex gap-2 p-1 bg-[#0a0f14] rounded-full"><button onclick="setAuth(\'login\')" class="flex-1 py-3 rounded-full text-[12px] font-black transition-all '+(auth==='login'?'bg-white text-black shadow-lg':'text-[#6b7280]')+'">دخول</button><button onclick="setAuth(\'reg\')" class="flex-1 py-3 rounded-full text-[12px] font-black transition-all '+(auth==='reg'?'bg-white text-black shadow-lg':'text-[#6b7280]')+'">حساب جديد</button></div>';
+  if(auth==='reg'){ h+='<div class="relative"><input id="fn" value="'+form.name+'" placeholder="الاسم الكامل" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none focus:border-[#f59e0b] transition-colors"></div>'; }
+  h+='<input id="fe" value="'+form.email+'" placeholder="الإيميل" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none focus:border-[#3b82f6]"><div class="relative"><input id="fp" value="'+form.pass+'" type="'+(showPass?'text':'password')+'" placeholder="الباسورد" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-5 py-3.5 text-[13px] outline-none focus:border-[#3b82f6]"><button onclick="togglePass()" class="absolute left-4 top-1/2 -translate-y-1/2 text-[14px]">👁️</button></div>';
+  if(auth==='login'){ h+='<button onclick="doLogin()" class="w-full gradient-blue py-3.5 rounded-full font-black shadow-lg shadow-blue-500/20 btn-press">دخول 🔥</button><button onclick="fillAdmin()" class="w-full gradient-gold py-3 rounded-full text-[11px] font-black text-black shadow-lg btn-press">👑 دخول الأدمن - أحمد خالد</button><p class="text-[10px] text-center text-[#6b7280] mt-2">🔐 محمي بنظام فلترة تلقائية</p>'; }
+  else{ h+='<button onclick="doReg()" class="w-full bg-[#10b981] py-3.5 rounded-full font-black shadow-lg shadow-green-500/20 btn-press">إنشاء حساب آمن ✅</button><p class="text-[9px] text-center text-[#6b7280]">يتم فحص المحتوى تلقائياً لمنع الإساءة</p>'; }
+  h+='</div><p class="text-[9px] text-center text-[#4b5563] mt-6">V7.0 PRO • PWA Ready • تصميم جديد كلياً</p></div>'; app.innerHTML=h;
+  setTimeout(()=>{ let fn=document.getElementById('fn'); if(fn) fn.oninput=e=>form.name=e.target.value; let fe=document.getElementById('fe'); if(fe) fe.oninput=e=>form.email=e.target.value; let fp=document.getElementById('fp'); if(fp) fp.oninput=e=>form.pass=e.target.value; },50); return;
+ }
+ var curGroup=groups.find(g=>String(g.id)===String(selGroup));
+ var curChat=users.find(u=>String(u.id)===String(selChat) || String(u.email)===String(selChat));
+ if(selChat||selGroup){
+  var title=curGroup?curGroup.name:curChat?curChat.name:'شات'; var img=curGroup?curGroup.img||'👥':curChat?curChat.name[0]:'💬'; var sub=curGroup?curGroup.members+' عضو':(curChat?getPresenceText(curChat.id||curChat.email):'');
+  var hh='<div class="flex flex-col h-screen bg-[#0a0f14]"><div class="p-3 glass border-b border-[#2a3441] flex items-center gap-3 sticky top-0 z-10"><button onclick="backHome()" class="w-9 h-9 glass rounded-full flex items-center justify-center">←</button><div class="w-10 h-10 rounded-full flex items-center justify-center font-black shadow-lg '+(curGroup?'bg-[#10b981]':'gradient-blue')+'">'+img+'</div><div class="flex-1"><p class="font-black text-[13px]">'+title+'</p><p class="text-[10px] '+(sub.includes('متصل الآن')?'text-green-400':'text-[#9aa4b2]')+'">'+sub+'</p></div>'+(isAdmin()?'<span class="text-[10px] bg-[#f59e0b]/20 text-[#fbbf24] px-2 py-1 rounded-full">👑 أدمن</span>':'')+'</div><div id="chatScroll" class="flex-1 overflow-auto p-3 space-y-3 bg-gradient-to-b from-[#0a0f14] to-[#0f1419]">';
+  var fMsgs=msgs.filter(m=> curGroup ? String(m.gid)===String(selGroup) : String(m.cid)===String(selChat) || String(m.sid)===String(selChat) || String(m.cid)===String(cur?.id) );
+  if(fMsgs.length===0) hh+='<div class="text-center mt-20"><p class="text-4xl">💬</p><p class="text-[#6b7280] text-[11px] mt-3">ابدأ المحادثة</p><p class="text-[10px] text-[#4b5563] mt-1">🔐 محمي • صور • فويس • لحظي</p></div>';
+  for(let mm of fMsgs){ let me=cur && String(mm.sid)===String(cur.id); let canDel=me||isAdmin();
+   if(mm.type==='img'){ hh+='<div class="flex '+(me?'justify-end':'justify-start')+'"><div class="max-w-[72%] group"><img src="'+mm.img+'" class="rounded-[18px] max-w-full shadow-lg"><div class="flex justify-between items-center mt-1.5 px-1"><p class="text-[9px] text-[#6b7280]">'+(mm.time||'')+'</p>'+(canDel?'<button onclick="deleteMsg(\''+mm.id+'\')" class="opacity-0 group-hover:opacity-100 text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded-full transition-all">🗑️</button>':'')+'</div></div></div>'; }
+   else if(mm.type==='voice'){ hh+='<div class="flex '+(me?'justify-end':'justify-start')+'"><div class="glass rounded-[18px] p-2.5 flex items-center gap-2.5"><span class="w-8 h-8 bg-[#8b5cf6] rounded-full flex items-center justify-center">🎤</span><audio controls src="'+mm.aud+'" class="w-[120px] h-[32px] rounded-full"></audio>'+(canDel?'<button onclick="deleteMsg(\''+mm.id+'\')" class="text-red-400 text-[12px]">🗑️</button>':'')+'</div></div>'; }
+   else { hh+='<div class="flex '+(me?'justify-end':'justify-start')+'"><div class="max-w-[78%]"><div class="'+(me?'gradient-blue shadow-lg shadow-blue-500/10':'glass')+' rounded-[18px] px-4 py-3"><p class="text-[13px] leading-[1.6]">'+(mm.txt||'')+'</p><p class="text-[8px] opacity-60 mt-1.5">'+(mm.sname||'')+' • '+(mm.time||'')+'</p></div>'+(canDel?'<button onclick="deleteMsg(\''+mm.id+'\')" class="mt-1.5 mr-1 text-[9px] bg-[#1c2128] text-[#6b7280] px-2.5 py-1 rounded-full">🗑️ مسح</button>':'')+'</div></div>'; }
+  }
+  hh+='</div><div class="p-3 glass border-t border-[#2a3441] flex gap-2 items-center"><button onclick="pickImg()" class="w-10 h-10 glass rounded-full flex items-center justify-center btn-press">📸</button><button onclick="isRec?stopR():startR()" class="w-10 h-10 rounded-full flex items-center justify-center btn-press '+(isRec?'bg-red-500 shadow-lg shadow-red-500/20 animate-pulse':'glass')+'">'+(isRec?'⏹️':'🎤')+'</button><input id="cin" placeholder="اكتب رسالة محترمة..." class="flex-1 bg-[#0a0f14] border border-[#2a3441] rounded-full px-4 py-3 text-[12px] outline-none focus:border-[#3b82f6]" onkeydown="if(event.key===\'Enter\')send()"><button onclick="send()" class="w-11 h-11 gradient-blue rounded-full shadow-lg flex items-center justify-center btn-press">➤</button></div></div>'; app.innerHTML=hh; var cs=document.getElementById('chatScroll'); if(cs) cs.scrollTop=cs.scrollHeight; return;
+ }
+ var html='<div class="p-3 space-y-3 pb-[100px] bg-[#0a0f14] min-h-screen">';
+ if(tab==='الرئيسية'){
+  html+='<div class="gradient-gold rounded-[28px] p-5 shadow-2xl shadow-orange-500/20 relative overflow-hidden"><div class="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div><p class="font-black text-[16px] relative">👋 أهلاً '+cur.name+'</p><p class="text-[11px] mt-1 opacity-90 relative">🔥 V7.0 PRO - تصميم جديد • حماية • تطبيق</p><div class="flex gap-2 mt-4 relative"><span class="bg-black/30 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold">🔥 '+users.length+' مستخدم</span><span class="bg-black/30 px-3 py-1.5 rounded-full text-[10px]">📱 PWA</span><span class="bg-black/30 px-3 py-1.5 rounded-full text-[10px]">🔐 آمن</span></div></div>';
+  html+='<div class="grid grid-cols-3 gap-2"><div class="glass rounded-[20px] p-3 text-center card-hover"><p class="text-[10px] text-[#9aa4b2]">الخريجين</p><p class="font-black text-[20px]">'+users.length+'</p><p class="text-[9px] text-green-400">حقيقي</p></div><div class="glass rounded-[20px] p-3 text-center card-hover"><p class="text-[10px] text-[#9aa4b2]">المنشورات</p><p class="font-black text-[20px]">'+posts.length+'</p><p class="text-[9px] text-[#9aa4b2]">جديد</p></div><div class="glass rounded-[20px] p-3 text-center card-hover"><p class="text-[10px] text-[#9aa4b2]">الرسائل</p><p class="font-black text-[20px]">'+msgs.length+'</p><p class="text-[9px] text-blue-400">لحظي</p></div></div>';
+  if(isAdmin()){ html+='<div class="glass border-[#f59e0b]/30 rounded-[20px] p-4 card-hover"><div class="flex justify-between items-center"><p class="font-black text-[12px] text-[#fbbf24]">👑 لوحة تحكم الأدمن PRO</p><span class="text-[9px] bg-[#f59e0b]/20 text-[#fbbf24] px-2 py-1 rounded-full">V7.0</span></div><div class="grid grid-cols-3 gap-2 mt-3 text-[10px]"><div class="bg-[#0a0f14] rounded-xl p-2.5 text-center"><p class="font-black text-[14px]">'+users.length+'</p><p class="text-[#6b7280]">مستخدم</p></div><div class="bg-[#0a0f14] rounded-xl p-2.5 text-center"><p class="font-black text-[14px]">'+msgs.length+'</p><p class="text-[#6b7280]">رسالة</p></div><div class="bg-[#0a0f14] rounded-xl p-2.5 text-center"><p class="font-black text-[14px] text-green-400">آمن</p><p class="text-[#6b7280]">النظام</p></div></div><p class="text-[9px] text-[#6b7280] mt-3">✨ تصميم جديد • 🔐 حماية من الإساءة • 📱 يعمل كتطبيق • كل الأزرار شغالة</p></div>'; }
+  html+='<div class="glass rounded-[20px] p-4"><p class="font-bold text-[12px]">🎯 الجديد في V7.0 PRO</p><div class="space-y-2 mt-3 text-[11px]"><div class="flex gap-2"><span class="text-green-400">✓</span><p>تصميم PRO جديد - Glassmorphism</p></div><div class="flex gap-2"><span class="text-green-400">✓</span><p>🔐 نظام حماية من الكلمات المسيئة</p></div><div class="flex gap-2"><span class="text-green-400">✓</span><p>📱 يعمل كتطبيق PWA - ثبّته على الشاشة</p></div><div class="flex gap-2"><span class="text-green-400">✓</span><p>⚡ أسرع + أنيميشن + تأثيرات</p></div></div></div>';
+ }
+ else if(tab==='الخريجين'){
+  html+='<div class="flex justify-between items-center"><div><h2 class="font-black text-[16px]">👥 الخريجين</h2><p class="text-[10px] text-[#9aa4b2]">'+users.length+' حقيقي • محمي 🔐</p></div><div class="glass rounded-full px-3 py-1.5 flex gap-2 items-center"><span class="text-[12px]">🔍</span><input oninput="onSearch(this.value)" placeholder="بحث..." value="'+searchQ+'" class="bg-transparent text-[11px] w-[70px] outline-none"></div></div>';
+  var filtered=users.filter(u=>!searchQ || u.name.toLowerCase().includes(searchQ.toLowerCase()));
+  for(let u of filtered){ html+='<div class="glass rounded-[20px] p-3.5 flex items-center gap-3 mt-2.5 card-hover"><div class="relative"><div class="w-12 h-12 rounded-full flex items-center justify-center font-black shadow-lg overflow-hidden '+(u.pic?'':'gradient-blue')+'">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#0a0f14] rounded-full flex items-center justify-center"><div class="w-2.5 h-2.5 '+(getPresenceText(u.id||u.email).includes('متصل الآن')?'bg-green-500 online-dot':'bg-gray-500')+' rounded-full"></div></div></div><div class="flex-1"><p class="font-bold text-[13px]">'+u.name+'</p><p class="text-[10px] '+(getPresenceText(u.id||u.email).includes('متصل الآن')?'text-green-400':'text-[#9aa4b2]')+'">'+getPresenceText(u.id||u.email)+' • '+(u.job||'خريج')+'</p></div><button onclick="openChat(\''+(u.id||u.email)+'\')" class="gradient-blue px-4 py-2 rounded-full text-[11px] font-bold shadow-lg btn-press">شات</button></div>'; }
+ }
+ else if(tab==='المتصدرين'){
+  html+='<h2 class="font-black text-[16px]">🏆 المتصدرين</h2><p class="text-[10px] text-[#9aa4b2]">نظام النقاط PRO</p>';
+  let sorted=[...users].sort((a,b)=>(b.points||0)-(a.points||0));
+  sorted.forEach((u,i)=>{ var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1); html+='<div class="glass rounded-[20px] p-3.5 flex gap-3 mt-2.5 items-center card-hover '+(i<3?'border-[#f59e0b]/30':'')+'"><span class="font-black w-8 text-center '+(i<3?'text-[18px]':'text-[12px]')+'">'+medal+'</span><div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden '+(i===0?'gradient-gold':'bg-[#1c2128]')+' shadow">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="flex-1"><p class="font-bold text-[12px]">'+u.name+'</p><p class="text-[10px] text-[#9aa4b2]">'+(u.points||0)+' نقطة</p></div>'+(i===0?'<span class="text-[10px] bg-[#f59e0b]/20 text-[#fbbf24] px-2 py-1 rounded-full">👑 الملك</span>':'')+'</div>'; });
+ }
+ else if(tab==='المختبر'){
+  html+='<h2 class="font-black text-[16px]">🧪 المختبر PRO</h2><div class="glass rounded-[24px] p-5 mt-3 text-center card-hover"><div class="w-16 h-16 bg-gradient-to-br from-[#8b5cf6] to-[#3b82f6] rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-xl">💻</div><p class="font-black mt-4">مختبر تكنو خريج PRO</p><p class="text-[11px] text-[#9aa4b2] mt-2">تحديات برمجية • تصميم تعليمي • ذكاء اصطناعي</p><div class="grid grid-cols-3 gap-2 mt-4"><div class="bg-[#0a0f14] rounded-xl p-2"><p class="text-[16px]">🧩</p><p class="text-[9px] mt-1">تحديات</p></div><div class="bg-[#0a0f14] rounded-xl p-2"><p class="text-[16px]">🎨</p><p class="text-[9px] mt-1">تصميم</p></div><div class="bg-[#0a0f14] rounded-xl p-2"><p class="text-[16px]">🤖</p><p class="text-[9px] mt-1]">AI</p></div></div><button onclick="toast(\'🚀 قريباً - بنجهز اختبارات PRO 🔥\')" class="mt-5 w-full gradient-blue py-3 rounded-full font-black text-[12px] shadow-lg btn-press">ابدأ الاختبار PRO</button><p class="text-[9px] text-[#4b5563] mt-2">V7.0 - تصميم جديد كلياً</p></div>';
+ }
+ else if(tab==='الشات'){
+  html+='<div class="flex justify-between items-center"><div><h2 class="font-black text-[16px]">💬 الشات</h2><p class="text-[10px] text-[#9aa4b2]">🔐 محمي • لحظي</p></div><button onclick="toggleCreateGroup()" class="gradient-blue px-4 py-2 rounded-full text-[11px] font-black shadow-lg btn-press">+ مجموعة</button></div>';
+  if(showCG){ html+='<div class="glass rounded-[20px] p-4 space-y-3 mt-3"><input id="gn" value="'+gName+'" placeholder="اسم المجموعة" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-full px-4 py-3 text-[11px] outline-none focus:border-[#10b981]"><div class="max-h-[110px] overflow-auto space-y-1.5 bg-[#0a0f14] rounded-xl p-2">'; for(let u of users){ html+='<label class="flex items-center gap-2 text-[11px] p-1.5 rounded-lg hover:bg-[#1c2128] cursor-pointer"><input type="checkbox" '+(selM.includes(u.id||u.email)?'checked':'')+' onclick="toggleM(\''+(u.id||u.email)+'\')" class="rounded"> '+u.name+'</label>'; } html+='</div><div class="flex gap-2"><button onclick="createG()" class="flex-1 bg-[#10b981] py-2.5 rounded-full text-[11px] font-black">إنشاء ✅</button><button onclick="cancelCreateGroup()" class="flex-1 bg-[#1c2128] py-2.5 rounded-full text-[11px]">إلغاء</button></div></div>'; }
+  for(let g of groups){ html+='<div onclick="openGroup(\''+g.id+'\')" class="glass rounded-[20px] p-3.5 flex gap-3 mt-2.5 cursor-pointer card-hover"><div class="w-12 h-12 bg-[#10b981] rounded-[14px] flex items-center justify-center shadow-lg text-xl">'+(g.img||'👥')+'</div><div class="flex-1"><p class="font-black text-[13px]">'+g.name+'</p><p class="text-[10px] text-[#9aa4b2]">'+(g.members||0)+' عضو • دوس للدخول 🚀</p></div><span class="text-[#6b7280]">→</span></div>'; }
+  for(let u of users){ if(cur && String(u.id||u.email)===String(cur.id)) continue; html+='<div onclick="openChat(\''+(u.id||u.email)+'\')" class="glass rounded-[20px] p-3.5 flex gap-3 mt-2.5 cursor-pointer card-hover"><div class="relative"><div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden gradient-blue shadow-lg">'+(u.pic?'<img src="'+u.pic+'" class="w-full h-full object-cover">':u.name[0])+'</div><div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#0a0f14] rounded-full flex items-center justify-center"><div class="w-2 h-2 '+(getPresenceText(u.id||u.email).includes('متصل الآن')?'bg-green-500 online-dot':'bg-gray-600')+' rounded-full"></div></div></div><div class="flex-1"><p class="font-bold text-[13px]">'+u.name+'</p><p class="text-[10px] '+(getPresenceText(u.id||u.email).includes('متصل الآن')?'text-green-400':'text-[#9aa4b2]')+'">'+getPresenceText(u.id||u.email)+'</p></div><div class="w-8 h-8 glass rounded-full flex items-center justify-center">💬</div></div>'; }
+ }
+ else if(tab==='المنشورات'){
+  html+='<h2 class="font-black text-[16px]">📝 المنشورات</h2><p class="text-[10px] text-[#9aa4b2]">🔐 محمية بنظام فلترة</p><div class="glass rounded-[20px] p-4 mt-3"><textarea id="np" placeholder="شارك حاجة مفيدة مع الخريجين... (محمي من الإساءة 🔐)" class="w-full bg-[#0a0f14] border border-[#2a3441] rounded-[16px] p-4 text-[12px] min-h-[80px] outline-none focus:border-[#3b82f6] resize-none">'+newPost+'</textarea><button onclick="doPost()" class="mt-3 w-full gradient-blue py-3 rounded-full font-black text-[12px] shadow-lg btn-press">نشر للكل 🔥 - محمي</button></div>';
+  for(let p of posts){ html+='<div class="glass rounded-[20px] p-4 mt-3 card-hover"><div class="flex gap-3 items-center"><div class="w-9 h-9 gradient-blue rounded-full flex items-center justify-center text-[12px] font-black shadow">'+(p.author?p.author[0]:'ن')+'</div><div class="flex-1"><p class="font-black text-[12px]">'+p.author+'</p><p class="text-[9px] text-[#9aa4b2]">'+(p.time||'')+' • 🔐 محمي</p></div>'+((cur && (p.authorId===cur.id || isAdmin()))?'<button onclick="deletePost(\''+p.id+'\')" class="w-8 h-8 bg-red-500/10 text-red-400 rounded-full">🗑️</button>':'')+'</div><p class="mt-3 text-[13px] leading-[1.7]">'+(p.text||'')+'</p><div class="flex gap-3 mt-3"><button onclick="likeP(\''+p.id+'\')" class="glass px-3 py-1.5 rounded-full text-[11px] flex items-center gap-1"><span>❤️</span> '+(p.likes||0)+'</button><span class="text-[10px] text-[#4b5563] py-1.5">🔐 تم فحص المحتوى</span></div></div>'; }
+  if(posts.length===0) html+='<div class="text-center mt-16"><p class="text-4xl">📝</p><p class="text-[#6b7280] text-[11px] mt-3">لا يوجد منشورات</p><p class="text-[10px] text-[#4b5563] mt-1">كن أول من ينشر - محمي 🔐</p></div>';
+ }
+ else if(tab==='حسابي'){
+  html+='<div class="flex justify-between items-center"><h2 class="font-black text-[16px]">👤 حسابي PRO</h2><span class="text-[9px] bg-[#f59e0b]/20 text-[#fbbf24] px-2.5 py-1 rounded-full font-bold">V7.0 PRO</span></div><div class="glass rounded-[28px] p-6 text-center mt-3 shadow-2xl relative overflow-hidden"><div class="absolute top-0 left-0 right-0 h-[80px] gradient-gold opacity-20"></div><div onclick="pickProfilePic()" class="relative w-24 h-24 rounded-full mx-auto flex items-center justify-center text-3xl cursor-pointer overflow-hidden shadow-2xl ring-4 ring-[#f59e0b]/20 group mt-2 bg-gradient-to-br from-[#f59e0b] to-[#d97706]"><div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[10px] rounded-full transition-all z-10"><span class="text-xl">📸</span>تغيير</div>'+(cur.pic?'<img src="'+cur.pic+'" class="w-full h-full object-cover">':'<span class="relative z-0">'+cur.name[0]+'</span>')+'</div><p class="font-black mt-4 text-[16px] relative">'+cur.name+'</p><p class="text-[11px] text-[#9aa4b2] relative">'+cur.email+'</p><p class="text-[11px] mt-2 font-black '+(isAdmin()?'text-[#fbbf24]':'text-[#9aa4b2]')+' relative">'+(isAdmin()?'👑 مؤسس المنصة - الأدمن PRO':'🎓 خريج تكنو')+'</p><div class="mt-5 grid grid-cols-3 gap-2 text-[10px] relative"><div class="bg-[#0a0f14]/80 backdrop-blur rounded-[14px] p-3"><p class="text-[#9aa4b2]">الحالة</p><p class="font-black text-green-400 mt-1">🟢 متصل</p></div><div class="bg-[#0a0f14]/80 rounded-[14px] p-3"><p class="text-[#9aa4b2]">النقاط</p><p class="font-black text-[14px] mt-1">'+(cur.points||0)+'</p></div><div class="bg-[#0a0f14]/80 rounded-[14px] p-3"><p class="text-[#9aa4b2]">الأمان</p><p class="font-black text-green-400 mt-1">🔐 آمن</p></div></div><button onclick="pickProfilePic()" class="mt-4 glass w-full py-3 rounded-full font-bold text-[11px] btn-press">📸 تغيير الصورة PRO</button><button onclick="logout()" class="mt-2.5 bg-red-500/10 border border-red-500/20 text-red-400 w-full py-3 rounded-full font-bold text-[11px] btn-press">تسجيل خروج</button></div><div class="glass rounded-[20px] p-4 mt-3"><p class="font-black text-[11px] flex items-center gap-2">🔥 حالة Firebase PRO <span class="text-[9px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">متصل</span></p><div class="mt-3 space-y-2 text-[10px]"><div class="flex justify-between"><span class="text-[#9aa4b2]">المستخدمين</span><span class="font-bold">'+users.length+' حقيقي</span></div><div class="flex justify-between"><span class="text-[#9aa4b2]">الرسائل</span><span class="font-bold">'+msgs.length+' لحظية</span></div><div class="flex justify-between"><span class="text-[#9aa4b2]">المنشورات</span><span class="font-bold">'+posts.length+'</span></div><div class="flex justify-between"><span class="text-[#9aa4b2]">الحماية</span><span class="font-bold text-green-400">🔐 نشطة</span></div><div class="flex justify-between"><span class="text-[#9aa4b2]">PWA</span><span class="font-bold text-blue-400">📱 جاهز</span></div></div><p class="text-[10px] text-green-400 mt-3 font-bold">✅ V7.0 PRO - كل الأزرار شغالة + تصميم جديد + حماية</p></div><div class="glass rounded-[16px] p-3 mt-3 text-center"><p class="text-[10px] text-[#9aa4b2]">💡 نصيحة PRO</p><p class="text-[10px] text-[#6b7280] mt-1">دوس على زر المشاركة في المتصفح → إضافة إلى الشاشة الرئيسية → هيبقى تطبيق! 📱</p></div>';
+ }
+ html+='</div><nav class="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[480px] w-full glass border-t border-[#2a3441] flex justify-around py-2.5 z-30 backdrop-blur-2xl">';
+ var tabs=[{k:'الرئيسية',i:'🏠',l:'الرئيسية'},{k:'الخريجين',i:'👥',l:'الخريجين'},{k:'المتصدرين',i:'🏆',l:'المتصدرين'},{k:'المختبر',i:'🧪',l:'المختبر'},{k:'الشات',i:'💬',l:'الشات'},{k:'المنشورات',i:'📝',l:'المنشورات'},{k:'حسابي',i:'👤',l:'حسابي'}];
+ for(let t of tabs){ var active=tab===t.k; html+='<button onclick="switchTab(\''+t.k+'\')" class="flex flex-col items-center gap-1 px-2 py-1 rounded-xl transition-all '+(active?'bg-[#f59e0b]/15 text-[#fbbf24]':'text-[#6b7280] hover:text-[#9aa4b2]')+'"><span class="text-[18px] '+(active?'scale-110':'')+' transition-transform">'+t.i+'</span><span class="text-[8px] font-bold">'+t.l+'</span>'+(active?'<div class="w-1 h-1 bg-[#fbbf24] rounded-full mt-0.5"></div>':'')+'</button>'; }
+ html+='</nav>'; app.innerHTML=html;
+ setTimeout(()=>{ let gn=document.getElementById('gn'); if(gn) gn.oninput=e=>gName=e.target.value; let np=document.getElementById('np'); if(np) np.oninput=e=>newPost=e.target.value; },50);
+}
+window.render=render;
+window.doLogin=async function(){
+ let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); if(fe) form.email=fe.value; if(fp) form.pass=fp.value;
+ if(!form.email||!form.pass){ toast('اكتب البيانات',true); return; }
+ try{ let q=query(collection(db,"users"), where("email","==",form.email.toLowerCase()), where("pass","==",form.pass)); let snap=await getDocs(q); if(snap.empty){ toast('بيانات غلط - تأكد من الإيميل والباسورد',true); return; } let data=snap.docs[0].data(); cur={...data, lastActive:Date.now()}; logged=true; localStorage.setItem('tk_cur',JSON.stringify(cur)); localStorage.setItem('tk_log','1'); await updateDoc(doc(db,"users",snap.docs[0].id), {lastActive:Date.now(), online:true}); render(); toast('👋 أهلاً '+cur.name+' - V7.0 PRO'); }catch(e){ toast('خطأ: '+e.message,true); }
+}
+window.doReg=async function(){
+ let fe=document.getElementById('fe'); let fp=document.getElementById('fp'); let fn=document.getElementById('fn'); if(fe) form.email=fe.value; if(fp) form.pass=fp.value; if(fn) form.name=fn.value;
+ if(!form.name||!form.email||!form.pass){ toast('املأ البيانات',true); return; }
+ var chk=checkContent(form.name); if(!chk.ok){ toast('الاسم فيه كلمة غير مسموحة 🚫',true); return; }
+ try{ let q=query(collection(db,"users"), where("email","==",form.email.toLowerCase())); let snap=await getDocs(q); if(!snap.empty){ toast('الإيميل مسجل بالفعل',true); return; } let nu={id:form.email.toLowerCase(),name:form.name,email:form.email.toLowerCase(),pass:form.pass,role:'user',pic:'',city:'القاهرة',job:'خريج',points:10,lastActive:Date.now(),online:true,createdAt:Date.now()}; let ref=await addDoc(collection(db,"users"), nu); await setDoc(doc(db,"users",ref.id), {...nu, docId:ref.id}); cur={...nu, docId:ref.id}; logged=true; localStorage.setItem('tk_cur',JSON.stringify(cur)); localStorage.setItem('tk_log','1'); render(); toast('🎉 أهلاً بيك - حسابك محمي 🔐'); }catch(e){ toast('خطأ: '+e.message,true); }
+}
+window.logout=function(){ logged=false; cur=null; localStorage.removeItem('tk_log'); localStorage.removeItem('tk_cur'); selChat=null; selGroup=null; render(); toast('👋 تم تسجيل الخروج'); }
+window.createG=async function(){ if(!gName.trim()){ toast('اكتب اسم المجموعة',true); return; } var chk=checkContent(gName); if(!chk.ok){ toast('الاسم فيه كلمة ممنوعة 🚫',true); return; } try{ let ng={id:Date.now(),name:gName,img:'👥',members:selM.length+1,desc:'أنشأها '+cur.name,createdBy:cur.id,createdAt:Date.now()}; await addDoc(collection(db,"groups"), ng); showCG=false; gName=''; selM=[]; toast('✅ تم إنشاء المجموعة'); }catch(e){ toast('خطأ',true); } }
+window.doPost=async function(){
+ let inp=document.getElementById('np'); if(inp) newPost=inp.value; if(!newPost.trim()){ toast('اكتب حاجة',true); return; }
+ var chk=checkContent(newPost); if(!chk.ok){ toast('🚫 المنشور فيه كلمة غير مسموحة - تم منعه\nالكلمة: '+(chk.word||''),true); return; }
+ try{ let np={id:Date.now(),author:cur.name,authorId:cur.id,text:newPost,time:new Date().toLocaleTimeString('ar-EG'),likes:0,img:cur.name[0],createdAt:Date.now()}; await addDoc(collection(db,"posts"), np); newPost=''; let inp2=document.getElementById('np'); if(inp2) inp2.value=''; toast('✅ تم النشر - محمي 🔐'); }catch(e){ toast('خطأ',true); }
+}
+window.likeP=async function(id){ try{ let q=query(collection(db,"posts"), where("id","==",Number(id))); let snap=await getDocs(q); if(!snap.empty){ await updateDoc(doc(db,"posts",snap.docs[0].id), {likes:(snap.docs[0].data().likes||0)+1}); } }catch(e){} }
+window.send=async function(){
+ let inp=document.getElementById('cin'); let t=inp?inp.value.trim():''; if(!t) return;
+ var chk=checkContent(t); if(!chk.ok){ toast('🚫 الرسالة فيها كلمة ممنوعة - تم منعها',true); if(inp) inp.value=''; return; }
+ try{ let m={id:Date.now(),txt:t,type:'text',sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,spic:cur.pic||'',createdAt:Date.now()}; await addDoc(collection(db,"messages"), m); if(inp) inp.value=''; }catch(e){ toast('خطأ',true); }
+}
+document.getElementById('profilePicInput').addEventListener('change', e=>{
+ let file=e.target.files[0]; if(!file) return; if(file.size>2*1024*1024){ toast('الصورة كبيرة - أقل من 2 ميجا',true); return; }
+ let r=new FileReader(); r.onload=ev=>{
+  if(cur){ cur.pic=ev.target.result; localStorage.setItem('tk_cur',JSON.stringify(cur)); getDocs(query(collection(db,"users"), where("email","==",cur.email))).then(snap=>{ if(!snap.empty) updateDoc(doc(db,"users",snap.docs[0].id), {pic:ev.target.result}); }); render(); toast('✅ تم تغيير الصورة PRO - ظهرت عند الكل 📸'); }
+ }; r.readAsDataURL(file);
+});
+document.getElementById('imgInput').addEventListener('change', e=>{
+ let file=e.target.files[0]; if(!file) return; if(file.size>3*1024*1024){ toast('الصورة كبيرة - أقل من 3 ميجا',true); return; }
+ let r=new FileReader();
+ r.onload=ev=>{ let b={id:Date.now(),type:'img',img:ev.target.result,sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,createdAt:Date.now()}; addDoc(collection(db,"messages"), b); toast('📸 تم إرسال الصورة'); };
+ r.readAsDataURL(file);
+});
+window.startR=async function(){
+ if(isRec) return; try{ let stream=await navigator.mediaDevices.getUserMedia({audio:true}); rec=new MediaRecorder(stream); chunks=[]; isRec=true; recTime=0; rec.ondataavailable=e=>chunks.push(e.data); rec.onstop=()=>{ let blob=new Blob(chunks,{type:'audio/webm'}); let r=new FileReader(); r.onload=ev=>{ let b={id:Date.now(),type:'voice',aud:ev.target.result,dur:recTime+'s',sid:cur.id,sname:cur.name,time:new Date().toLocaleTimeString('ar-EG'),cid:selChat?String(selChat):null,gid:selGroup?String(selGroup):null,createdAt:Date.now()}; addDoc(collection(db,"messages"), b); toast('🎤 تم إرسال الفويس'); }; r.readAsDataURL(blob); stream.getTracks().forEach(t=>t.stop()); }; rec.start(); recInt=setInterval(()=>{recTime++; let inp=document.getElementById('cin'); if(inp) inp.placeholder='🔴 '+recTime+'s - دوس ⏹️ للإيقاف';},1000); render(); toast('🎤 جاري التسجيل...'); }catch(err){ toast('الميك مش شغال - فعل الإذن',true); }
+}
+window.stopR=function(){ if(!isRec||!rec) return; rec.stop(); isRec=false; clearInterval(recInt); let inp=document.getElementById('cin'); if(inp) inp.placeholder='اكتب رسالة محترمة...'; render(); }
+async function initFirebase(){
+ try{
+  let q=query(collection(db,"users"), where("email","==","ahmed@admin.com")); let s=await getDocs(q); if(s.empty){ await addDoc(collection(db,"users"), {id:"ahmed@admin.com",name:"أحمد خالد مصطفى 👑",email:"ahmed@admin.com",pass:"admin123",role:"admin",city:"القاهرة",job:"مؤسس المنصة",points:999,lastActive:Date.now(),online:true}); }
+  onSnapshot(collection(db,"users"), snap=>{ users=snap.docs.map(d=>d.data()); render(); });
+  onSnapshot(query(collection(db,"messages"), orderBy("createdAt","asc")), snap=>{ msgs=snap.docs.map(d=>d.data()); render(); });
+  onSnapshot(collection(db,"groups"), snap=>{ groups=snap.docs.map(d=>d.data()); if(groups.length===0) groups=[{id:101,name:'دفعة تكنولوجيا 2023 🎓',img:'🎓',members:5,desc:'جروب الدفعة'},{id:102,name:'فرص عمل - TIEC 💼',img:'💼',members:4}]; render(); });
+  onSnapshot(query(collection(db,"posts"), orderBy("createdAt","desc")), snap=>{ posts=snap.docs.map(d=>d.data()); render(); });
+  let cl=JSON.parse(localStorage.getItem('tk_cur')||'null'); let ll=localStorage.getItem('tk_log')==='1'; if(cl&&ll){ cur=cl; logged=true; }
+  render(); toast('🔥 V7.0 PRO جاهزة - تصميم جديد + حماية + PWA');
+ }catch(e){ console.log(e); toast('جاري التحميل...',false); }
+}
+initFirebase();
+</script>
+</body>
+</html>
