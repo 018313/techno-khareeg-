@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تكنو خريج - دفعة 2023 - تسجيل حقيقي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>*{font-family:'Tajawal',sans-serif} body{background:#0f1419;color:white} @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}} .toast{animation:slideUp 0.3s}</style>
+</head>
+<body>
+<div id="root" class="max-w-[480px] mx-auto min-h-screen bg-[#0f1419] relative"></div>
+<div id="toastBox" class="fixed bottom-[20px] left-1/2 -translate-x-1/2 z-[200] space-y-2 w-[90%] max-w-[380px]"></div>
+<script>
+function toast(msg,type='ok'){
+ const c=document.getElementById('toastBox'); const d=document.createElement('div');
+ d.className=`toast px-4 py-3 rounded-2xl text-[12px] font-bold shadow-2xl border ${type==='ok'?'bg-[#1c2128]/95 border-[#2a3441]':'bg-red-500/90 border-red-400'} text-white text-center`;
+ d.innerText=msg; c.appendChild(d);
+ setTimeout(()=>{d.style.opacity='0'; setTimeout(()=>d.remove(),300)},3500);
+}
+const gradsData=[
+ {id:1,name:'أحمد خالد مصطفى',year:'2023',job:'مطور واجهات - إنجاز تك',city:'القاهرة',bio:'مبرمج منصة تكنو خريج - دفعة 2023',online:true,img:'أ',points:520,followed:true},
+ {id:2,name:'سارة محمد أحمد',year:'2023',job:'Instructional Designer - Edraak',city:'المنصورة',bio:'تصميم تعليمي',online:true,img:'س',points:510,followed:false},
+ {id:3,name:'محمود أحمد علي',year:'2023',job:'Backend - Vezeeta',city:'الإسكندرية',bio:'Node.js Developer',online:true,img:'م',points:480,followed:false},
+ {id:4,name:'نورهان عصام',year:'2023',job:'UI/UX - SWVL',city:'القاهرة',bio:'مصممة واجهات',online:true,img:'ن',points:460,followed:false},
+ {id:5,name:'محمد علي حسن',year:'2023',job:'مصمم تعليمي - نفهم',city:'القاهرة',bio:'تطوير محتوى',online:false,img:'م',points:445,followed:false},
+ {id:6,name:'ريم طارق',year:'2022',job:'E-Learning Specialist - TIEC',city:'الجيزة',bio:'خبير تعلم إلكتروني',online:true,img:'ر',points:430,followed:false},
+ {id:7,name:'عبدالرحمن جمال',year:'2023',job:'Fullstack - Instabug',city:'القاهرة',bio:'MERN Stack',online:true,img:'ع',points:420,followed:false},
+ {id:8,name:'أماني سمير',year:'2023',job:'Content Creator - Almentor',city:'طنطا',bio:'صناعة محتوى',online:false,img:'أ',points:410,followed:false},
+ {id:9,name:'يوسف إبراهيم',year:'2022',job:'Mobile Dev - Vezeeta',city:'الإسكندرية',bio:'Flutter',online:true,img:'ي',points:400,followed:false},
+ {id:10,name:'منة الله خالد',year:'2023',job:'Graphic Designer',city:'المنصورة',bio:'تصميم تعليمي',online:true,img:'م',points:395,followed:false},
+ {id:11,name:'كريم وائل',year:'2023',job:'DevOps - DXC',city:'القاهرة',bio:'Cloud & CI/CD',online:true,img:'ك',points:385,followed:false},
+ {id:12,name:'هاجر محمد',year:'2023',job:'مدرس تكنولوجيا',city:'أسيوط',bio:'معلم تكنولوجيا',online:false,img:'ه',points:380,followed:false},
+ {id:13,name:'أحمد سمير فؤاد',year:'2022',job:'Project Manager - ITIDA',city:'القاهرة',bio:'إدارة مشاريع',online:true,img:'أ',points:375,followed:false},
+ {id:14,name:'بسمة علاء',year:'2023',job:'Video Editor - نفهم',city:'القاهرة',bio:'مونتاج تعليمي',online:true,img:'ب',points:360,followed:false},
+ {id:15,name:'إسلام فتحي',year:'2023',job:'AI Engineer',city:'الجيزة',bio:'ذكاء اصطناعي',online:true,img:'إ',points:350,followed:false},
+ {id:16,name:'دينا حسام',year:'2023',job:'QA - SWVL',city:'القاهرة',bio:'اختبار منصات',online:false,img:'د',points:340,followed:false},
+ {id:17,name:'مصطفى كمال',year:'2022',job:'LMS Admin',city:'المنصورة',bio:'إدارة Moodle',online:true,img:'م',points:330,followed:false},
+ {id:18,name:'شيماء عادل',year:'2023',job:'مطورة واجهات',city:'القاهرة',bio:'React Developer',online:true,img:'ش',points:320,followed:false},
+ {id:19,name:'عمر شريف',year:'2023',job:'Data Analyst',city:'الإسكندرية',bio:'تحليل بيانات',online:true,img:'ع',points:310,followed:false},
+ {id:20,name:'فاطمة الزهراء',year:'2023',job:'Instructional Designer',city:'سوهاج',bio:'تصميم حقائب',online:false,img:'ف',points:300,followed:false},
+ {id:21,name:'خالد منصور',year:'2022',job:'مدرس حاسب',city:'الشرقية',bio:'معلم خبير',online:true,img:'خ',points:295,followed:false},
+ {id:22,name:'آية محمود',year:'2023',job:'مصممة محتوى',city:'القاهرة',bio:'Storyline',online:true,img:'آ',points:285,followed:false},
+ {id:23,name:'بلال أحمد',year:'2023',job:'Flutter Dev',city:'القاهرة',bio:'تطبيقات تعليمية',online:true,img:'ب',points:275,followed:false},
+ {id:24,name:'زينب رضا',year:'2022',job:'باحثة تكنولوجيا',city:'القاهرة',bio:'ماجستير',online:false,img:'ز',points:260,followed:false},
+ {id:25,name:'مازن طارق',year:'2023',job:'Game Dev',city:'الجيزة',bio:'ألعاب تعليمية',online:true,img:'م',points:250,followed:false},
+ {id:26,name:'إسراء مجدي',year:'2023',job:'مصممة UX',city:'المنصورة',bio:'تجربة مستخدم',online:true,img:'إ',points:240,followed:false},
+ {id:27,name:'أحمد حسام الدين',year:'2022',job:'CTO - منصة تعليمية',city:'القاهرة',bio:'رائد أعمال',online:true,img:'أ',points:600,followed:false},
+];
+
+let users = JSON.parse(localStorage.getItem('tk_real_users')||'[]');
+// ضمان وجود حساب اللجنة
+if(!users.find(u=>u.email==='jury@edu-tech.com')){
+ users.push({name:'لجنة التحكيم', email:'jury@edu-tech.com', pass:'123456', year:'2023', role:'jury'});
+ localStorage.setItem('tk_real_users', JSON.stringify(users));
+}
+
+let logged = localStorage.getItem('tk_real_logged')==='1';
+let currentUser = JSON.parse(localStorage.getItem('tk_current_user')||'null');
+let activeTab='الخريجين';
+let searchQ='';
+let showPass=false;
+let selectedGrad=null;
+let selectedChat=null;
+let messages=JSON.parse(localStorage.getItem('tk_msgs_real')||'[]');
+let authMode='login'; // login or register
+let form={name:'', email:'', pass:'', year:'2023'};
+
+function saveMsgs(){localStorage.setItem('tk_msgs_real',JSON.stringify(messages))}
+function saveUsers(){localStorage.setItem('tk_real_users',JSON.stringify(users))}
+
+function render(){
+ const root=document.getElementById('root');
+ if(!logged){
+  root.innerHTML=`
+  <div class="min-h-screen flex flex-col p-5 justify-center">
+    <div class="text-center mb-6">
+      <div class="w-20 h-20 bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-2xl">🎓</div>
+      <h1 class="font-black text-[22px] mt-4">تكنو خريج</h1>
+      <p class="text-[13px] text-[#9aa4b2] mt-1">دفعة 2023 - تسجيل حقيقي - بدون ضيف 🔒</p>
+      <div class="mt-3 bg-[#1c2128] border border-[#2a3441] rounded-2xl p-3 text-[11px] text-right">
+        <p class="font-bold text-green-400">✅ نظام تسجيل حقيقي:</p>
+        <p class="text-[#9aa4b2] mt-1">• كل حساب يتحفظ - لو كتبت باسورد غلط مش هتدخل</p>
+        <p class="text-[#9aa4b2]">• حساب اللجنة: jury@edu-tech.com / 123456</p>
+        <p class="text-[#9aa4b2]">• عدد المسجلين حالياً: ${users.length} حساب</p>
+      </div>
+    </div>
+
+    <div class="bg-[#1c2128] border border-[#2a3441] rounded-3xl p-5 space-y-4">
+      <div class="flex bg-[#0f1419] rounded-full p-1">
+        <button onclick="authMode='login'; render()" class="flex-1 py-2 rounded-full text-[12px] font-bold ${authMode==='login'?'bg-[#3b82f6] text-white':'text-[#9aa4b2]'}">تسجيل دخول</button>
+        <button onclick="authMode='register'; render()" class="flex-1 py-2 rounded-full text-[12px] font-bold ${authMode==='register'?'bg-[#3b82f6] text-white':'text-[#9aa4b2]'}">إنشاء حساب</button>
+      </div>
+
+      ${authMode==='register'?`
+        <input oninput="form.name=this.value" value="${form.name}" placeholder="الاسم الكامل - مثال: د. أحمد محمد" class="w-full bg-[#0f1419] border border-[#2a3441] rounded-2xl px-4 py-3 text-[12px] outline-none focus:border-[#3b82f6]">
+      `:''}
+
+      <input oninput="form.email=this.value" value="${form.email}" placeholder="الإيميل - مثال: dr@edu.com" class="w-full bg-[#0f1419] border border-[#2a3441] rounded-2xl px-4 py-3 text-[12px] outline-none focus:border-[#3b82f6]">
+
+      <div class="relative">
+        <input oninput="form.pass=this.value" value="${form.pass}" type="${showPass?'text':'password'}" placeholder="الباسورد - 4 حروف على الأقل" class="w-full bg-[#0f1419] border border-[#2a3441] rounded-2xl px-4 py-3 text-[12px] outline-none focus:border-[#3b82f6]">
+        <button onclick="togglePass()" class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px]">${showPass?'🙈':'👁️'}</button>
+      </div>
+
+      ${authMode==='register'?`
+        <select onchange="form.year=this.value" class="w-full bg-[#0f1419] border border-[#2a3441] rounded-2xl px-4 py-3 text-[12px] outline-none">
+          <option value="2023" ${form.year==='2023'?'selected':''}>دفعة 2023 (دفعتك)</option>
+          <option value="2022">دفعة 2022</option>
+          <option value="2024">دفعة 2024</option>
+          <option value="دكتور">دكتور / عضو هيئة تدريس</option>
+        </select>
+      `:''}
+
+      <button onclick="${authMode==='login'?'doLoginReal()':'doRegister()'}"
+        class="w-full bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] py-3.5 rounded-2xl font-black text-[13px] shadow-lg">
+        ${authMode==='login'?'🔑 تسجيل الدخول - نظام حقيقي':'✨ إنشاء حساب جديد - حفظ حقيقي'}
+      </button>
+
+      ${authMode==='login'?`
+        <button onclick="fillJuryReal()" class="w-full bg-[#252f3d] py-2.5 rounded-2xl text-[11px]">⚡ ملء حساب اللجنة تلقائياً</button>
+        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-3 text-[10px]">
+          <p class="text-yellow-400 font-bold">💡 للجنة:</p>
+          <p class="text-[#9aa4b2] mt-1">دوس "ملء حساب اللجنة" ثم "تسجيل الدخول" - هتدخل على طول - 27 خريج</p>
+          <p class="text-[#9aa4b2]">لو دكتور جديد: دوس "إنشاء حساب" وسجل بياناتك</p>
+        </div>
+      `:`
+        <p class="text-[10px] text-[#6b7280] text-center">بالضغط على إنشاء حساب، أنت توافق أن المنصة حصرية لتكنولوجيا التعليم 🔒</p>
+      `}
+    </div>
+  </div>`;
+  return;
+ }
+
+ // بعد تسجيل الدخول - نفس الواجهة القديمة لكن مع اسم المستخدم
+ const filtered = gradsData.filter(g=>!searchQ || g.name.includes(searchQ) || g.job.includes(searchQ) || g.city.includes(searchQ));
+ root.innerHTML=`
+  <div class="sticky top-0 z-10 bg-[#0f1419]/90 backdrop-blur border-b border-[#2a3441] p-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-[#3b82f6] rounded-full flex items-center justify-center font-black">${currentUser?currentUser.name[0]:'أ'}</div>
+      <div>
+        <p class="font-bold text-[12px]">${currentUser?currentUser.name:'أحمد خالد - 2023'}</p>
+        <p class="text-[10px] text-green-400">● متصل - ${users.length} حساب مسجل - بدون ضيف 🔒</p>
+      </div>
+    </div>
+    <button onclick="doLogoutReal()" class="bg-[#1c2128] border border-[#2a3441] px-3 py-1.5 rounded-full text-[10px]">خروج</button>
+  </div>
+
+  <div class="p-3 space-y-3 pb-[80px] pt-4">
+    <div class="bg-[#1c2128] border border-green-500/30 rounded-2xl p-3 flex justify-between items-center">
+      <p class="text-[11px]"><span class="text-green-400 font-bold">✅ تسجيل حقيقي مفعل</span> - ${currentUser?currentUser.email:''}</p>
+      <p class="text-[10px] bg-green-500/20 px-2 py-1 rounded-full">${users.length} حساب</p>
+    </div>
+    <div class="flex gap-2">
+      <input oninput="searchQ=this.value; render()" value="${searchQ}" placeholder="🔍 ابحث..." class="flex-1 bg-[#1c2128] border border-[#2a3441] rounded-full px-4 py-2.5 text-[12px] outline-none">
+      <button onclick="searchQ=''; render()" class="bg-[#252f3d] px-4 rounded-full text-[11px]">مسح</button>
+    </div>
+    <p class="text-[11px] text-[#9aa4b2]">نتائج: ${filtered.length} خريج - دفعة 2023 وما قبلها</p>
+    ${filtered.map(g=>`
+      <div class="bg-[#1c2128] border border-[#2a3441] rounded-2xl p-4 flex gap-3">
+        <div class="relative"><div class="w-14 h-14 bg-[#3b82f6] rounded-full flex items-center justify-center font-black text-lg">${g.img}</div>${g.online?'<div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#1c2128]"></div>':''}</div>
+        <div class="flex-1">
+          <p class="font-black text-[13px]">${g.name}</p>
+          <p class="text-[11px] text-[#9aa4b2] mt-1">${g.job} • ${g.city}</p>
+          <p class="text-[10px] text-[#6b7280] mt-1">${g.points} نقطة • دفعة ${g.year}</p>
+          <div class="flex gap-2 mt-3">
+            <button onclick="toggleFollow(${g.id})" class="px-3 py-1.5 rounded-full text-[11px] ${g.followed?'bg-green-500/20 text-green-400':'bg-[#252f3d]'}">${g.followed?'✅ متابع':'➕ تابع'}</button>
+            <button onclick="openChat(${g.id})" class="bg-[#3b82f6] px-4 py-1.5 rounded-full text-[11px] font-bold">راسل</button>
+            <button onclick="openGrad(${g.id})" class="bg-[#252f3d] px-3 py-1.5 rounded-full text-[11px]">عرض</button>
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  ${selectedGrad ? `<div class="p-4 space-y-4 pb-[90px]"><button onclick="selectedGrad=null; render()" class="text-sm">← رجوع</button><div class="bg-[#1c2128] border border-[#2a3441] rounded-2xl p-6 text-center"><div class="w-20 h-20 bg-[#3b82f6] rounded-full flex items-center justify-center font-black text-2xl mx-auto">${selectedGrad.img}</div><p class="font-black text-[16px] mt-3">${selectedGrad.name}</p><p class="text-[12px] text-[#9aa4b2] mt-1">${selectedGrad.job}</p><p class="text-[11px] text-[#6b7280] mt-2">دفعة ${selectedGrad.year} - ${selectedGrad.points} نقطة</p></div></div>`:''}
+  ${selectedChat ? `<div class="flex flex-col h-[calc(100vh-0px)]"><div class="p-3 bg-[#1c2128] border-b border-[#2a3441] flex items-center gap-3"><button onclick="selectedChat=null; render()" class="text-xl">←</button><div class="w-9 h-9 bg-[#3b82f6] rounded-full flex items-center justify-center font-bold">${selectedChat.img}</div><div><p class="font-bold text-sm">${selectedChat.name}</p><p class="text-[10px] text-green-400">متصل الآن</p></div></div><div id="msgs" class="flex-1 overflow-auto p-3 space-y-3 pb-[80px]">${messages.filter(m=>m.chatId===selectedChat.id).map(m=>`<div class="flex ${m.sender==='me'?'justify-end':'justify-start'}"><div class="${m.sender==='me'?'bg-[#3b82f6]':'bg-[#21262d]'} max-w-[75%] rounded-2xl px-4 py-2"><p class="text-sm">${m.text}</p></div></div>`).join('')}</div><div class="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[480px] w-full p-3 bg-[#1c2128] border-t border-[#2a3441] flex gap-2"><input id="chatIn" onkeydown="if(event.key==='Enter')sendMsg()" placeholder="اكتب رسالة..." class="flex-1 bg-[#0f1419] border border-[#2a3441] rounded-full px-4 py-2.5 text-sm outline-none"><button onclick="sendMsg()" class="bg-[#3b82f6] px-5 py-2.5 rounded-full text-sm font-bold">إرسال</button></div></div>`:''}
+  ${!selectedChat && !selectedGrad ? `<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[480px] w-full bg-[#161b22] border-t border-[#2a3441] flex justify-around py-2 px-1 z-20">${[{k:'الخريجين',i:'👥'},{k:'المتصدرين',i:'🏆'},{k:'المختبر',i:'🧪'},{k:'الشات',i:'💬'}].map(n=>`<button onclick="activeTab='${n.k}'; render()" class="flex flex-col items-center text-[10px] ${activeTab===n.k?'text-[#60a5fa]':'text-[#6b7280]'}"><span class="text-[18px]">${n.i}</span>${n.k}</button>`).join('')}</nav>`:''}
+ `;
+}
+
+function togglePass(){showPass=!showPass; render()}
+function fillJuryReal(){form.email='jury@edu-tech.com'; form.pass='123456'; render(); toast('✅ تم ملء حساب اللجنة - دوس تسجيل الدخول')}
+function doLoginReal(){
+ if(!form.email || !form.pass){toast('❌ اكتب الإيميل والباسورد','err'); return;}
+ let u = users.find(x=>x.email.toLowerCase()===form.email.toLowerCase());
+ if(!u){toast('❌ الحساب مش موجود - دوس إنشاء حساب جديد','err'); return;}
+ if(u.pass!==form.pass){toast('❌ الباسورد غلط - حاول تاني','err'); return;}
+ logged=true; currentUser=u;
+ localStorage.setItem('tk_real_logged','1');
+ localStorage.setItem('tk_current_user', JSON.stringify(u));
+ render(); toast('🎉 أهلاً '+u.name+' - تسجيل حقيقي ناجح - 27 خريج في انتظارك');
+}
+function doRegister(){
+ if(!form.name || !form.email || !form.pass){toast('❌ املأ كل البيانات','err'); return;}
+ if(form.pass.length<4){toast('❌ الباسورد لازم 4 حروف على الأقل','err'); return;}
+ if(users.find(x=>x.email.toLowerCase()===form.email.toLowerCase())){toast('❌ الإيميل ده مسجل قبل كده - دوس تسجيل دخول','err'); return;}
+ let newUser={name:form.name, email:form.email, pass:form.pass, year:form.year, role:'user', id:Date.now()};
+ users.push(newUser); saveUsers();
+ logged=true; currentUser=newUser;
+ localStorage.setItem('tk_real_logged','1');
+ localStorage.setItem('tk_current_user', JSON.stringify(newUser));
+ render(); toast('✅ تم إنشاء حسابك بنجاح يا '+form.name+' - مرحباً في تكنو خريج دفعة 2023');
+}
+function doLogoutReal(){logged=false; currentUser=null; localStorage.removeItem('tk_real_logged'); localStorage.removeItem('tk_current_user'); selectedChat=null; selectedGrad=null; render(); toast('تم تسجيل الخروج - بياناتك محفوظة 🔒')}
+function openGrad(id){selectedGrad=gradsData.find(g=>g.id===id); render()}
+function openChat(id){selectedChat=gradsData.find(g=>g.id===id); selectedGrad=null; render()}
+function sendMsg(){
+ const inp=document.getElementById('chatIn'); const t=inp?inp.value.trim():''; if(!t||!selectedChat) return;
+ messages.push({id:Date.now(),chatId:selectedChat.id,text:t,sender:'me',time:new Date().toLocaleTimeString('ar-EG')}); saveMsgs(); render();
+ setTimeout(()=>{messages.push({id:Date.now()+1,chatId:selectedChat.id,text:'تمام يا دكتور 👌','sender':'other'}); saveMsgs(); render()},600);
+}
+function toggleFollow(id){let g=gradsData.find(x=>x.id===id); g.followed=!g.followed; if(selectedGrad&&selectedGrad.id===id) selectedGrad.followed=g.followed; render(); toast(g.followed?'✅ تابعت '+g.name:'❌ ألغيت متابعة');}
+render();
+</script>
+</body>
+</html>
