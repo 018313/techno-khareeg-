@@ -1,0 +1,15 @@
+{
+  "name": "تكنو خريج - V10.1 الأصلية",
+  "short_name": "تكنو خريج",
+  "description": "TekhnoKhareeg - V10.1 مكالمات ترن حتى لو قافل + PWA + كل اللي فات + نبذة + المبرمج + إدارة مجموعات + كل الأدوات حقيقية",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0f14",
+  "theme_color": "#0f1419",
+  "orientation": "any",
+  "scope": "./",
+  "icons": [
+    {"src": "./icon-192.png","sizes": "192x192","type": "image/png","purpose": "any"},
+    {"src": "./icon-512.png","sizes": "512x512","type": "image/png","purpose": "any maskable"}
+  ]
+}
