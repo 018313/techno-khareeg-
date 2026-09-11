@@ -1,0 +1,25 @@
+{
+  "name": "تكنو خريج - V11.0 - لجنة التحكيم",
+  "short_name": "تكنو خريج",
+  "description": "V11.0 COMMITTEE EDITION - جاهز للعرض بكرة - خصوصية 100%",
+  "start_url": "./index.html?v=11.0-committee-final",
+  "display": "standalone",
+  "background_color": "#0a0f14",
+  "theme_color": "#0f1419",
+  "orientation": "any",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
