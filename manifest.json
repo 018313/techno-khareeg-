@@ -1,7 +1,7 @@
 {
   "name": "تكنو خريج - V11.0 - لجنة التحكيم",
   "short_name": "تكنو خريج",
-  "description": "V11.0 COMMITTEE EDITION - جاهز للعرض بكرة - خصوصية 100%",
+  "description": "V11.0 COMMITTEE EDITION - جاهز للعرض - خصوصية 100%",
   "start_url": "./index.html?v=11.0-committee-final",
   "display": "standalone",
   "background_color": "#0a0f14",
