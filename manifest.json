@@ -1,7 +1,7 @@
 {
-  "name": "تكنو خريج - V10.9.1 PRIVACY FIX - مكالمات + خصوصية",
+  "name": "تكنو خريج - V10.9.1",
   "short_name": "تكنو خريج",
-  "description": "منصة خريجي تكنولوجيا - شات خاص 100%، مكالمات صوت وفيديو، إشعارات حتى لو قافل",
+  "description": "شات خاص 100% - مكالمات",
   "start_url": "./index.html?v=10.9.1",
   "display": "standalone",
   "background_color": "#0a0f14",
@@ -20,20 +20,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "الشات",
-      "short_name": "الشات",
-      "description": "افتح الشات مباشرة",
-      "url": "./index.html",
-      "icons": [
-        {
-          "src": "./icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
     }
   ]
 }
