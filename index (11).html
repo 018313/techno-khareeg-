@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1419">
+<title>تكنو خريج - المنصة الأصلية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Tajawal',sans-serif;box-sizing:border-box}
+body{margin:0;background:#0a0f14;color:white;min-height:100vh}
+#app{max-width:480px;margin:0 auto;min-height:100vh;background:#0a0f14}
+.glass{background:rgba(28,33,40,0.95);border:1px solid #2a3441;border-radius:24px;padding:16px}
+.btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;border:none;padding:14px;border-radius:999px;font-weight:900;width:100%;cursor:pointer}
+.input{width:100%;background:#1a2332;border:1px solid #2a3441;border-radius:12px;padding:12px;color:white;margin-top:8px}
+.tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:12px;font-size:12px;font-weight:700}
+.tab-active{background:#3b82f6;color:white}
+.header{background:linear-gradient(135deg,#0f1419,#1a2332);padding:16px;border-bottom:1px solid #2a3441}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+let cur=null, logged=false;
+try{cur=JSON.parse(localStorage.getItem('tk_cur')||'null');logged=localStorage.getItem('tk_log')==='1'&&cur;}catch(e){}
+let tab='الرئيسية';
+function render(){
+  const app=document.getElementById('app');
+  if(!logged){
+    app.innerHTML=`
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center">
+        <h1 style="font-size:32px;font-weight:900">🎓 تكنو خريج</h1>
+        <p style="color:#fbbf24;font-weight:900;margin-top:8px">منصة الخريجين - النسخة الأصلية</p>
+        <div class="glass" style="width:100%;margin-top:24px;text-align:right">
+          <p style="font-weight:900;font-size:18px">تسجيل دخول</p>
+          <p style="font-size:11px;color:#9aa4b2;margin-top:4px">ادخل بياناتك للمتابعة</p>
+          <input id="email" class="input" placeholder="الإيميل" value="ahmed@example.com">
+          <input id="pass" class="input" type="password" placeholder="كلمة السر" value="123456">
+          <button onclick="login()" class="btn" style="margin-top:16px">🚀 دخول المنصة</button>
+        </div>
+        <div class="glass" style="width:100%;margin-top:16px;font-size:11px;text-align:right;line-height:1.8">
+          <p style="font-weight:900">📋 مميزات المنصة:</p>
+          <p>• 🏠 الرئيسية - إحصائيات</p>
+          <p>• 💬 شات خاص - خصوصية 100%</p>
+          <p>• 📝 المنشورات</p>
+          <p>• 👥 الخريجين</p>
+          <p>• 🧪 المختبر</p>
+          <p>• 📞 مكالمات</p>
+        </div>
+      </div>`;
+    return;
+  }
+  let content='';
+  if(tab==='الرئيسية'){
+    content=`<div style="padding:16px"><div class="glass"><p style="font-weight:900;font-size:20px">أهلاً، ${cur.name||'أحمد'} 👋</p><p style="font-size:11px;color:#9aa4b2">${cur.email||''}</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px"><div style="background:#1a2332;padding:12px;border-radius:16px;text-align:center"><p style="font-size:24px;font-weight:900;color:#3b82f6">+500</p><p style="font-size:10px">خريج</p></div><div style="background:#1a2332;padding:12px;border-radius:16px;text-align:center"><p style="font-size:24px;font-weight:900;color:#22c55e">+120</p><p style="font-size:10px">شركة</p></div></div></div></div>`;
+  } else if(tab==='الشات'){
+    content=`<div style="padding:16px"><div class="glass"><p style="font-weight:900">💬 الشات</p><div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><div style="background:#1a2332;padding:10px;border-radius:12px">👨‍💻 أحمد خالد - متصل</div><div style="background:#1a2332;padding:10px;border-radius:12px">👩‍🎓 سارة محمد</div></div></div></div>`;
+  } else if(tab==='المنشورات'){
+    content=`<div style="padding:16px"><div class="glass"><p style="font-weight:900">📝 المنشورات</p><div style="margin-top:12px"><div style="background:#1a2332;padding:12px;border-radius:12px;margin-top:8px"><p style="font-weight:700">أحمد</p><p style="font-size:11px;margin-top:4px">مشروع تكنو خريج - منصة تربط الخريجين بالشركات 🎉</p></div></div></div></div>`;
+  } else if(tab==='الخريجين'){
+    content=`<div style="padding:16px"><div class="glass"><p style="font-weight:900">👥 الخريجين</p><div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><div style="background:#1a2332;padding:10px;border-radius:12px">👨‍💻 أحمد - علوم حاسب</div><div style="background:#1a2332;padding:10px;border-radius:12px">👩‍🎓 سارة - نظم معلومات</div></div></div></div>`;
+  } else {
+    content=`<div style="padding:16px"><div class="glass"><p style="font-weight:900">🧪 المختبر</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><div style="background:#1a2332;padding:12px;border-radius:12px;text-align:center">📄<br>CV</div><div style="background:#1a2332;padding:12px;border-radius:12px;text-align:center">📊<br>GPA</div><div style="background:#1a2332;padding:12px;border-radius:12px;text-align:center">💼<br>بورتفوليو</div><div style="background:#1a2332;padding:12px;border-radius:12px;text-align:center">💰<br>راتب</div></div></div></div>`;
+  }
+  app.innerHTML=`<div class="header"><div style="display:flex;justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:18px;font-weight:900">🎓 تكنو خريج</h1><p style="margin:0;font-size:10px;color:#fbbf24">النسخة الأصلية</p></div><button onclick="logout()" style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#ef4444;padding:6px 12px;border-radius:999px;font-size:11px">خروج</button></div></div><div style="flex:1;overflow-y:auto;padding-bottom:80px;background:#0a0f14">${content}</div><div style="position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#0f1419;border-top:1px solid #2a3441;display:flex;padding:8px;gap:4px"><div class="tab ${tab==='الرئيسية'?'tab-active':''}" onclick="setTab('الرئيسية')">🏠<br>الرئيسية</div><div class="tab ${tab==='الشات'?'tab-active':''}" onclick="setTab('الشات')">💬<br>الشات</div><div class="tab ${tab==='المنشورات'?'tab-active':''}" onclick="setTab('المنشورات')">📝<br>منشورات</div><div class="tab ${tab==='الخريجين'?'tab-active':''}" onclick="setTab('الخريجين')">👥<br>خريجين</div><div class="tab ${tab==='المختبر'?'tab-active':''}" onclick="setTab('المختبر')">🧪<br>مختبر</div></div>`;
+}
+function setTab(t){tab=t;render();}
+function login(){
+  const email=document.getElementById('email').value||'ahmed@example.com';
+  cur={id:'user_'+Date.now(),name:'أحمد',email:email,createdAt:Date.now()};
+  logged=true;localStorage.setItem('tk_cur',JSON.stringify(cur));localStorage.setItem('tk_log','1');render();
+}
+function logout(){localStorage.removeItem('tk_cur');localStorage.removeItem('tk_log');logged=false;cur=null;render();}
+render();
+</script>
+</body>
+</html>
